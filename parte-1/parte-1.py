@@ -4,22 +4,31 @@ import sys
 
 def parser(route):
     matrix = []
+    valid_values = {'.', 'X', 'O'}
     with open(route, "r") as f:
-        for line in f:
+        for line_idx, line in enumerate(f, start=1):
             line = line.strip()
+
+            # Turn 0's into O's for better user experience (0 and O are very similar).
+            line = line.replace("0", "O")
+
+            # Line validations
             if line == "":
                 continue
             for character in line:
-                if character not in {'.', 'X', 'O'}:
-                    raise ValueError("Existen valores no válidos en el archivo .in")
+                if character not in valid_values:
+                    raise ValueError(f"Valor inválido en la línea {line_idx}: {character}.\n Valores válidos: {valid_values}.")
+            # If everythong OK, add line
             matrix.append(line)
 
     #Matrix validations
-    n = len(matrix)
+    n = len(matrix) # Number of rows / cols.
     for i in range(n):
+        # Case: matrix is not n x n.
         if len(matrix[i]) != n:
             raise ValueError("La matriz no es cuadrada")
-        
+    
+    # Case: n is odd.
     if n%2 != 0:
         raise ValueError("El tamaño de la matriz debe ser par")
     return matrix
@@ -31,17 +40,17 @@ def equalAppearances(*values):
     count_O = values.count('O')
     count_empty = values.count('None')
 
-    # Caso en el que la linea este llena 
+    # Case: Line is full
     if count_empty == 0:
         return count_O == count_X
 
-    #caso en el que más de la mitad de la línea este formada por un valor
+    # Case: more than half of the line is filled with a value.
     n = len(values)
     half = n/2
     if count_X > half or count_O > half:
         return False
     
-    #caso no definido, sigue formando soluciones
+    # Undefined case, keep searching for solutions.
     return True
 
 
@@ -50,7 +59,7 @@ def maxThreeOnARow(*values):
     count = 0
     last = None
     for value in values:
-        #caso no definido, sigue contando
+        # Undefined case, keep counting
         if value is None:
             return True
         
@@ -65,7 +74,7 @@ def maxThreeOnARow(*values):
     return True
 
 def print_board(matrix):
-
+    """ Prints the board in a pretty format. """
     n = len(matrix)
     line = "+---" * n + "+"
 
@@ -81,6 +90,7 @@ def print_board(matrix):
     print(line)
 
 def write_board(matrix, f):
+    """ Writes the board to a file in a pretty format."""
     n = len(matrix)
     line = "+---" * n + "+"
 
@@ -96,17 +106,21 @@ def write_board(matrix, f):
     f.write(line + "\n")
 
 def write_solution(solution, n, f):
-    # Crear matriz vacía
+    # Create empty matrix
     matrix = [['' for _ in range(n)] for _ in range(n)]
     
-    # Llenar matriz con el diccionario del solver
+    # Fill it up with the solver's dictionary
     for (i, j), value in solution.items():
         matrix[i][j] = value
 
-    # Imprimir usando tu mismo método
     write_board(matrix, f) 
 
 def main():
+    """ Solves the Binairo CSP with python-constraint. 
+        Params: 
+            - infile:  path to the file containing the specific problem.
+            - outfile: path to the file where the solution will be outputted.
+    """
     if len(sys.argv) != 3:
         print("Uso: python parte-1.py <fichero-entrada> <fichero-salida>")
         sys.exit(1)
@@ -119,7 +133,7 @@ def main():
     # create a new problem
     manager = constraint.Problem()
 
-    #variables
+    # variables
     domain_X = ['X']
     domain_O = ['O']
     domain_empty = ['X', 'O']
@@ -149,15 +163,18 @@ def main():
         manager.addConstraint(equalAppearances, col_vars)
         manager.addConstraint(maxThreeOnARow, col_vars)
 
-    # Soluciones
+    # Solutions
     solutions = manager.getSolutions()
     print_board(matrix)
     print(f"Se han encontrado {len(solutions)} soluciones.")
     
+
+    # Write the first solution, if exists, to outpath
     with open(route_out, "w") as f:
         write_board(matrix, f)
         f.write('\n')
-        write_solution(solutions[0], n, f)
+        if len(solutions) > 0:
+            write_solution(solutions[0], n, f)
     
 
 if __name__ == "__main__":
