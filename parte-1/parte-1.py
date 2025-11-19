@@ -125,15 +125,16 @@ def main():
         print("Uso: python parte-1.py <fichero-entrada> <fichero-salida>")
         sys.exit(1)
 
+    # Argparsing
     route_in = sys.argv[1]
     route_out = sys.argv[2]
 
     matrix = parser(route_in)
     
-    # create a new problem
+    # Create a new problem
     manager = constraint.Problem()
 
-    # variables
+    # Variables
     domain_X = ['X']
     domain_O = ['O']
     domain_empty = ['X', 'O']
@@ -141,6 +142,7 @@ def main():
     n = len(matrix)
     variables = []
 
+    # Add variables to the problem.
     for i in range(n):
         for j in range(n):
             variable = (i, j)
@@ -152,13 +154,13 @@ def main():
             else:
                 manager.addVariable(variable, domain_empty)
 
-    #constraints
-    for i in range(n):
+    # Constraints
+    for i in range(n): # Rows
         row_vars = [(i, j) for j in range(n)]
         manager.addConstraint(equalAppearances, row_vars)
         manager.addConstraint(maxThreeOnARow, row_vars)
 
-    for j in range(n):
+    for j in range(n): # Cols
         col_vars = [(i, j) for i in range(n)]
         manager.addConstraint(equalAppearances, col_vars)
         manager.addConstraint(maxThreeOnARow, col_vars)
