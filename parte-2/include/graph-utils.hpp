@@ -30,15 +30,15 @@ public:
   Graph() = default;
 
   // Methods
-  void addNode(GNode const &node) { nodes.push_back(node); }
+  inline void addNode(GNode const &node) { nodes.push_back(node); }
 
-  void addEdge(int from, int to, int distance) {
+  inline void addEdge(int from, int to, int distance) {
     // Adjust indices if IDs start at 1
     nodes[from - 1].neighbours.push_back({to - 1, distance});
   }
 
   // Getters
-  const GNode &getNode(int id) const { return nodes[id - 1]; }
+  inline const GNode &getNode(int id) const { return nodes[id - 1]; }
 
   // Attributes
   std::vector<GNode> nodes;
