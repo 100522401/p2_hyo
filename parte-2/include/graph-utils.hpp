@@ -9,9 +9,9 @@ struct GNode {
   /* Defines a node of a graph */
   int id;
 
-  // Map coordinates (simple precission float is enough)
-  float cx;
-  float cy;
+  // Map coordinates (simple precision float is not enough)
+  double cx;
+  double cy;
 
   // Edges
   std::vector<GEdge> neighbours;
@@ -30,18 +30,15 @@ public:
   Graph() = default;
 
   // Methods
-  int addNode(int id, float x, float y) {
-    int newId = nodes.size();
-    nodes.push_back({newId, x, y, {}});
-    return newId;
-  }
+  void addNode(GNode const &node) { nodes.push_back(node); }
 
   void addEdge(int from, int to, int distance) {
-    nodes[from].neighbours.push_back({to, distance});
+    // Adjust indices if IDs start at 1
+    nodes[from - 1].neighbours.push_back({to - 1, distance});
   }
 
   // Getters
-  const GNode &getNode(int id) const { return nodes[id]; }
+  const GNode &getNode(int id) const { return nodes[id - 1]; }
 
   // Attributes
   std::vector<GNode> nodes;

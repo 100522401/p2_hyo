@@ -5,3 +5,7 @@ venv/
 *.dat
 
 graph-data/
+settings.json
+.vscode/
+.cache/
+build/
