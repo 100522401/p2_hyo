@@ -3,3 +3,5 @@ venv/
 *.in
 *.out
 *.dat
+
+graph-data/
