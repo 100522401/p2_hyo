@@ -27,7 +27,3 @@ add_executable(${EXECUTABLE_NAME} ${SOURCES})
 # PUBLIC: Significa que si otra librería enlaza contra este target,
 # también heredará este directorio de inclusión.
 target_include_directories(${EXECUTABLE_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-# Mensaje informativo que se mostrará después de configurar el proyecto.
-message(STATUS "Proyecto configurado. Para compilar, ejecuta 'make'.")
-message(STATUS "Para ejecutar: ./${EXECUTABLE_NAME} <archivo.co> <archivo.gr>")
