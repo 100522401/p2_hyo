@@ -10,7 +10,7 @@ GraphParser::GraphParser(const std::string &dataset_name) {
   gr_file = dataset_name + ".gr";
 }
 
-Graph GraphParser::parse() {
+Graph GraphParser::parse_debug() {
   Graph g;
 
   std::cout << "Leyendo nodos desde " << co_file << " ..." << std::endl;
@@ -32,6 +32,13 @@ Graph GraphParser::parse() {
   std::cout << "Grafo cargado. Número de nodos: " << g.nodes.size()
             << std::endl;
 
+  return g;
+}
+
+Graph GraphParser::parse() {
+  Graph g;
+  parseNodes(g);
+  parseEdges(g);
   return g;
 }
 

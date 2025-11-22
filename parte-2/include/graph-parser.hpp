@@ -11,6 +11,7 @@ public:
 
   // Función principal: parsea y devuelve el grafo completo
   Graph parse();
+  Graph parse_debug();
 
 private:
   // Attributes
