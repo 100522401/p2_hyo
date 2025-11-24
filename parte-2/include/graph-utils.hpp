@@ -7,8 +7,12 @@ class Graph {
 public:
   int n; // número de nodos
   int m; // número de aristas
-  std::vector<int> row_ptr;
+  /* row_ptr[u] -> dónde empiezan los vecinos de u
+     row_ptr[u+1] -> dónde acaban los vecinos de u*/
+  std::vector<int> row_ptr; 
+  /*lugar en el que se almacenan los vecinos de cada nodo*/
   std::vector<int> col_idx;
+  /*contiene los pesos correspondientes a las aristas de col_idx*/
   std::vector<int> weights; // opcional, si el grafo es ponderado
   std::vector<std::pair<double, double>>
       coords; // coordenadas de los nodos, si existen
@@ -22,8 +26,20 @@ public:
   }
 
   // Función auxiliar para iterar vecinos de un nodo
-  std::vector<int> neighbors(int u) const {
-    return std::vector<int>(col_idx.begin() + row_ptr[u],
-                            col_idx.begin() + row_ptr[u + 1]);
+  // std::vector<int> neighbors(int u) const {
+  //   return std::vector<int>(col_idx.begin() + row_ptr[u],
+  //                           col_idx.begin() + row_ptr[u + 1]);
+  // }
+
+/***
+ * Esta función devuelve dos punteros:
+ *    - Puntero que indica el inicio de los vecinos del nodo u en col_idx
+ *    - Puntero que indica el final de los vecinos del nodo u en col_idx (uno después del último)
+ */
+  inline std::pair<const int*, const int*> neighbors(int u) const {
+    return {
+        col_idx.data() + row_ptr[u],
+        col_idx.data() + row_ptr[u+1]
+    };
   }
 };
