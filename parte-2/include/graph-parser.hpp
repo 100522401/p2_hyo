@@ -9,7 +9,7 @@ public:
   // Constructor that receives file name without extension (e.g. USA_map)
   GraphParser(const std::string &dataset_name);
 
-  // Función principal: parsea y devuelve el grafo completo
+  // Main function
   Graph parse();
   Graph parse_debug();
 

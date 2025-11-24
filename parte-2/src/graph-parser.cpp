@@ -1,15 +1,21 @@
 #include "graph-parser.hpp"
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <vector>
 
-GraphParser::GraphParser(const std::string &dataset_name) {
-  // Construct file paths based on dataset name
-  co_file = dataset_name + ".co";
-  gr_file = dataset_name + ".gr";
+GraphParser::GraphParser(const std::string &dataset_name)
+    : co_file(dataset_name + ".co"), gr_file(dataset_name + ".gr") {}
+
+Graph GraphParser::parse() { // The const is removed to match the header
+  Graph g;
+  parseNodes(g);
+  parseEdges(g);
+  return g;
 }
-
 Graph GraphParser::parse_debug() {
   Graph g;
 
@@ -29,21 +35,30 @@ Graph GraphParser::parse_debug() {
   elapsed = end - start;
   std::cout << "Edge parsing time: " << elapsed.count() << " seconds.\n";
 
-  std::cout << "Graph loaded. Number of nodes: " << g.nodes.size() << std::endl;
+  std::cout << "Graph loaded. Number of nodes: " << g.nodes.size()
+            << ", number of edges: " << g.edges.size() << std::endl;
 
-  return g;
-}
+  // Optional: print first 10 nodes and their neighbors for debug
+  std::cout << std::fixed << std::setprecision(6);
+  for (size_t i = 0; i < g.nodes.size() && i < 10; ++i) {
+    const GNode &node = g.getNode(i + 1);
+    std::cout << "Node " << node.id << " (" << node.cx << ", " << node.cy
+              << ") has "
+              << ((i + 1 < g.nodes.size()) ? g.nodes[i + 1].offset - node.offset
+                                           : g.edges.size() - node.offset)
+              << " neighbors\n";
 
-Graph GraphParser::parse() {
-  Graph g;
-  // Parse nodes and edges without debug output
-  parseNodes(g);
-  parseEdges(g);
+    const auto &edges = g.getEdges(i);
+    for (const auto &edge : edges) {
+      std::cout << "    -> Node " << edge.to + 1 << " at distance "
+                << edge.distance << "\n";
+    }
+  }
+
   return g;
 }
 
 void GraphParser::parseNodes(Graph &g) const {
-  // Open the coordinates file
   std::ifstream in(co_file);
   if (!in.is_open()) {
     std::cerr << "Error opening file: " << co_file << std::endl;
@@ -51,36 +66,54 @@ void GraphParser::parseNodes(Graph &g) const {
   }
 
   std::string line;
+  int total_nodes = 0;
+
+  // First pass: find total nodes
   while (std::getline(in, line)) {
-    // Skip empty lines and comments
     if (line.empty() || line[0] == '#')
       continue;
 
     std::istringstream iss(line);
     std::string prefix;
-    int id, lat_micro, lon_micro;
-    iss >> prefix >> id >> lon_micro >> lat_micro; // note: lon first
+    iss >> prefix;
+    if (prefix == "p") {
+      std::string aux1, aux2, aux3;
+      iss >> aux1 >> aux2 >> aux3 >>
+          total_nodes; // Corregido: Leer 'aux', 'sp', 'co' antes del número
+      break;
+    }
+  }
 
-    // Only process lines starting with 'v'
+  g.nodes.reserve(total_nodes);
+  std::cout << "Total nodes: " << total_nodes << std::endl;
+
+  // Rewind file
+  in.clear();
+  in.seekg(0, std::ios::beg);
+
+  while (std::getline(in, line)) {
+    if (line.empty() || line[0] == '#')
+      continue;
+
+    std::istringstream iss(line);
+    std::string prefix;
+    int id, lon_micro, lat_micro;
+    iss >> prefix >> id >> lon_micro >> lat_micro;
+
     if (prefix != "v")
       continue;
 
-    // Convert from microdegrees to degrees
-    double lat = lat_micro / 1e6;
     double lon = lon_micro / 1e6;
+    double lat = lat_micro / 1e6;
 
-    // Add node to graph
-    GNode node{id, lon, lat, {}};
-    g.addNode(node);
+    g.addNode(lon, lat); // addNode sets id and offset automatically
   }
 
   in.close();
-  std::cout << "Read " << g.nodes.size() << " nodes from " << co_file
-            << std::endl;
+  std::cout << "Read " << g.nodes.size() << " nodes.\n";
 }
 
 void GraphParser::parseEdges(Graph &g) const {
-  // Open the edges file
   std::ifstream in(gr_file);
   if (!in.is_open()) {
     std::cerr << "Error opening file: " << gr_file << std::endl;
@@ -88,26 +121,72 @@ void GraphParser::parseEdges(Graph &g) const {
   }
 
   std::string line;
-  int edge_count = 0;
+  int total_edges = 0;
+  int total_nodes_check = 0;
+
+  // First pass: find the 'p' line to get total nodes and edges
   while (std::getline(in, line)) {
-    // Skip empty lines and comments
     if (line.empty() || line[0] == '#')
       continue;
 
     std::istringstream iss(line);
     std::string prefix;
-    int u, v, distance;
-    iss >> prefix >> u >> v >> distance;
+    iss >> prefix;
+    if (prefix == "p") {
+      std::string type;
+      iss >> type >> total_nodes_check >>
+          total_edges; // Leemos 'sp', num_nodos y num_aristas
+      break;
+    }
+  }
 
-    // Only process lines starting with 'a'
+  g.edges.resize(total_edges); // Reservamos memoria para todas las aristas
+  std::cout << "Total edges: " << total_edges << std::endl;
+
+  // Step 1: compute out-degree
+  std::vector<int> out_degree(g.nodes.size(), 0);
+  in.clear();
+  in.seekg(0, std::ios::beg);
+  while (std::getline(in, line)) {
+    if (line.empty() || line[0] == '#')
+      continue;
+    std::istringstream iss(line);
+    std::string prefix;
+    int u, v, d;
+    iss >> prefix >> u >> v >> d;
+    if (prefix != "a")
+      continue;
+    out_degree[u - 1]++;
+  }
+
+  // Step 2: set offsets
+  g.nodes[0].offset = 0;
+  for (size_t i = 1; i < g.nodes.size(); ++i)
+    g.nodes[i].offset = g.nodes[i - 1].offset + out_degree[i - 1];
+
+  // Step 3: fill edges
+  std::vector<int> current_pos(g.nodes.size());
+  for (size_t i = 0; i < g.nodes.size(); ++i)
+    current_pos[i] = g.nodes[i].offset;
+
+  in.clear();
+  in.seekg(0, std::ios::beg);
+  int edge_count = 0;
+  while (std::getline(in, line)) {
+    if (line.empty() || line[0] == '#')
+      continue;
+    std::istringstream iss(line);
+    std::string prefix;
+    int u, v, d;
+    iss >> prefix >> u >> v >> d;
     if (prefix != "a")
       continue;
 
-    // Add edge to graph
-    g.addEdge(u, v, distance);
+    int idx = current_pos[u - 1]++;
+    g.edges[idx] = {v - 1, d};
     edge_count++;
   }
 
   in.close();
-  std::cout << "Read " << edge_count << " edges from " << gr_file << std::endl;
+  std::cout << "Read " << edge_count << " edges into CSR.\n";
 }
