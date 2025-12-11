@@ -3,6 +3,11 @@
 #include <utility>
 #include <vector>
 
+struct Coord {
+    double lon;
+    double lat;
+};
+
 class Graph {
 public:
   int n; // número de nodos
@@ -14,8 +19,7 @@ public:
   std::vector<int> col_idx;
   /*contiene los pesos correspondientes a las aristas de col_idx*/
   std::vector<int> weights; // opcional, si el grafo es ponderado
-  std::vector<std::pair<double, double>>
-      coords; // coordenadas de los nodos, si existen
+  std::vector<Coord> coords; // coordenadas de los nodos, si existen
 
   Graph() : n(0), m(0) {}
   Graph(int nodes, int edges) : n(nodes), m(edges) {
