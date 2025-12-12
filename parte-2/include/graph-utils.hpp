@@ -19,9 +19,8 @@ public:
   /*lugar en el que se almacenan los vecinos de cada nodo*/
   std::vector<int> col_idx;
 
-  /*contiene los pesos correspondientes a las aristas de col_idx*/
   std::vector<int> weights;
-  std::vector<Coord> coords; // coordenadas de los nodos, si existen
+  std::vector<Coord> coords;
 
   Graph() : n(0), m(0) {}
   Graph(int nodes, int edges) : n(nodes), m(edges) {
