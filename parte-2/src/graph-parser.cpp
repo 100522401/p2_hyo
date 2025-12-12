@@ -2,18 +2,15 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <sstream>
-#include <tuple>
 #include <vector>
-#include <charconv>
 
 using namespace std;
 using namespace std::chrono;
 
 struct Edge {
-    int u;
-    int v;
-    int w;
+  int u;
+  int v;
+  int w;
 };
 
 GraphParser::GraphParser(const string &dataset_name) {
@@ -28,39 +25,41 @@ inline void jumpSpaces(const char *&p, const char *end) {
 }
 
 inline void jumpChars(const char *&p, const char *end) {
-  while (p < end && *p != ' '){
+  while (p < end && *p != ' ') {
     p++;
-  } 
+  }
 }
 
 inline int fastAtoi(const char *&p, const char *end) {
-    int x = 0;
-    while (p < end) {
-        unsigned char c = *p;
-        if (c < '0' || c > '9') break;
-        x = x * 10 + (c - '0');
-        p++;
-    }
-    return x;
+  int x = 0;
+  while (p < end) {
+    unsigned char c = *p;
+    if (c < '0' || c > '9')
+      break;
+    x = x * 10 + (c - '0');
+    p++;
+  }
+  return x;
 }
 
-inline int fastAtoiSigned(const char*& p, const char* end) {
-    bool neg = false;
-    if (p < end && *p == '-') {
-        neg = true;
-        p++;
-    }
-    int x = 0;
-    while (p < end) {
-        unsigned char c = *p;
-        if (c < '0' || c > '9') break;
-        x = x * 10 + (c - '0');
-        p++;
-    }
-    if (neg) {
-        x = -x;
-    }
-    return x;
+inline int fastAtoiSigned(const char *&p, const char *end) {
+  bool neg = false;
+  if (p < end && *p == '-') {
+    neg = true;
+    p++;
+  }
+  int x = 0;
+  while (p < end) {
+    unsigned char c = *p;
+    if (c < '0' || c > '9')
+      break;
+    x = x * 10 + (c - '0');
+    p++;
+  }
+  if (neg) {
+    x = -x;
+  }
+  return x;
 }
 
 Graph GraphParser::parse() {
@@ -75,18 +74,18 @@ Graph GraphParser::parse() {
   int m = 0;
   bool header_read = false;
 
-  std::vector <int> count;
-  std::vector <Edge> edges;
+  std::vector<int> count;
+  std::vector<Edge> edges;
 
   // Leer cabecera
   while (getline(fin, line)) {
-    if (line.empty()){
+    if (line.empty()) {
       continue;
     }
 
     // puntero a los caracteres de la línea
-    const char* p = line.data();
-    const char* end = p + line.size();
+    const char *p = line.data();
+    const char *end = p + line.size();
 
     // Se saltan espacios iniciales
     jumpSpaces(p, end);
@@ -96,7 +95,7 @@ Graph GraphParser::parse() {
     }
 
     if (*p == 'p') {
-      p++;  //saltamos caracter "p"
+      p++; // saltamos caracter "p"
 
       jumpSpaces(p, end);
 
@@ -104,13 +103,13 @@ Graph GraphParser::parse() {
       jumpChars(p, end);
       jumpSpaces(p, end);
 
-      //Parseamos n con from_chars (El puntero p no se mueve)
+      // Parseamos n con from_chars (El puntero p no se mueve)
       n = fastAtoi(p, end);
 
       // Se salta n
       jumpSpaces(p, end);
 
-      //Parseamos m con from_chars
+      // Parseamos m con from_chars
       m = fastAtoi(p, end);
 
       // inicializamos vector count con n posiciones
@@ -125,12 +124,12 @@ Graph GraphParser::parse() {
     if (!header_read) {
       continue;
     }
-    
-    // ARISTAS
-    if(*p == 'e') {
-      p++;  //saltamos caracter "a" o "e"
 
-      //saltamos espacios después de "a" o "e" y llegamos a u
+    // ARISTAS
+    if (*p == 'e') {
+      p++; // saltamos caracter "a" o "e"
+
+      // saltamos espacios después de "a" o "e" y llegamos a u
       jumpSpaces(p, end);
 
       // Leer nodo origen u
@@ -144,17 +143,16 @@ Graph GraphParser::parse() {
       u -= 1;
       v -= 1;
       int w = 1;
-      // sumamos al contador 
+      // sumamos al contador
       if (u >= 0 && u < n) {
         count[u]++;
-        //cerr << "[DEBUG] count[" << u << "] = " << count[u] << endl;
+        // cerr << "[DEBUG] count[" << u << "] = " << count[u] << endl;
         edges.push_back({u, v, w});
       }
-    }
-    else if(*p == 'a') {
-       p++;  //saltamos caracter "a" o "e"
+    } else if (*p == 'a') {
+      p++; // saltamos caracter "a" o "e"
 
-      //saltamos espacios después de "a" o "e" y llegamos a u
+      // saltamos espacios después de "a" o "e" y llegamos a u
       jumpSpaces(p, end);
 
       // Leer nodo origen u
@@ -171,10 +169,10 @@ Graph GraphParser::parse() {
       // Pasamos datos a base 0
       u -= 1;
       v -= 1;
-      // sumamos al contador 
+      // sumamos al contador
       if (u >= 0 && u < n) {
         count[u]++;
-        //cerr << "[DEBUG] count[" << u << "] = " << count[u] << endl;
+        // cerr << "[DEBUG] count[" << u << "] = " << count[u] << endl;
         edges.push_back({u, v, w});
       }
     }
@@ -192,27 +190,27 @@ Graph GraphParser::parse() {
   g.row_ptr[0] = 0;
   cerr << "[DEBUG] row_ptr empieza:" << endl;
   for (int i = 0; i < n; i++) {
-    g.row_ptr[i+1] = g.row_ptr[i] + count[i];
+    g.row_ptr[i + 1] = g.row_ptr[i] + count[i];
   }
   cerr << "[DEBUG] row_ptr acaba:" << endl;
 
   // Se crea temp_ptr
   std::vector<int> temp_ptr = g.row_ptr;
-  
+
   cerr << "[DEBUG] aristas empiezan:" << endl;
 
- // Metemos aristas en CSR
+  // Metemos aristas en CSR
   for (const auto &e : edges) {
     int pos = temp_ptr[e.u]++;
     g.col_idx[pos] = e.v;
     g.weights[pos] = e.w;
-}
-  
-  cerr << "[DEBUG] Aristas terminan: "
-     << g.row_ptr[n] << " aristas almacenadas.\n";
+  }
+
+  cerr << "[DEBUG] Aristas terminan: " << g.row_ptr[n]
+       << " aristas almacenadas.\n";
 
   fin.close();
-  
+
   parseNodes(g);
 
   return g;
@@ -241,12 +239,12 @@ void GraphParser::parseNodes(Graph &g) const {
   cerr << "[DEBUG] nodos empieza:" << endl;
 
   while (getline(fin, line)) {
-    if (line.empty() || line[0] == 'c'){
+    if (line.empty() || line[0] == 'c') {
       continue;
     }
-    
-    const char* p = line.data();
-    const char* end = p + line.size();
+
+    const char *p = line.data();
+    const char *end = p + line.size();
 
     // Saltar espacios iniciales
     jumpSpaces(p, end);
@@ -261,10 +259,10 @@ void GraphParser::parseNodes(Graph &g) const {
 
     jumpSpaces(p, end);
 
-    int lon_int = fastAtoiSigned(p, end);  
+    int lon_int = fastAtoiSigned(p, end);
     jumpSpaces(p, end);
 
-    // leer latitud 
+    // leer latitud
     int lat_int = fastAtoiSigned(p, end);
 
     // DIMACS usa coordenadas multiplicadas por 1e6
@@ -274,6 +272,6 @@ void GraphParser::parseNodes(Graph &g) const {
     g.coords[id - 1] = {lon, lat};
   }
   cerr << "[DEBUG] nodos acaba:" << endl;
-  
+
   fin.close();
 }
