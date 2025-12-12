@@ -1,4 +1,4 @@
-#include "graph-parser.hpp"
+#include "graph_parser.hpp"
 #include <chrono>
 #include <fstream>
 #include <iostream>

@@ -1,4 +1,4 @@
-#include "graph-parser.hpp"
+#include "graph_parser.hpp"
 
 int main() {
   // Initialize parser

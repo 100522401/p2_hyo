@@ -1,7 +1,7 @@
 #ifndef GRAPH_PARSER_HPP
 #define GRAPH_PARSER_HPP
 
-#include "graph-utils.hpp"
+#include "graph_utils.hpp"
 #include <string>
 
 class GraphParser {

@@ -1,4 +1,4 @@
-#include "../include/open_list.hpp"
+#include "open_list.hpp"
 
 void OpenList::insert_neighbors(std::vector<Node> &neighbors) {
   std::vector<Node> result;
