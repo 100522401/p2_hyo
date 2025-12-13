@@ -9,9 +9,22 @@ int main() {
   // Parsear grafo
   Graph g = parser.parse_debug();
 
+  int u = 2; // nodo 3 en base 0
+
+  std::cout << "Vecinos del nodo 3 (indice 2):\n";
+
+  auto [begin, end] = g.neighbours(u);
+  for (auto it = begin; it != end; ++it) {
+    int v = *it;
+    int edge_idx = (it - begin) + g.row_ptr[u];
+    int w = g.weights[edge_idx];
+
+    std::cout << "3 -> " << (v + 1) << "  peso = " << w << "\n";
+  }
+
   // Definir nodos de prueba
-  int start_node = 3;
-  int goal_node = 11;
+  int start_node = 2;
+  int goal_node = 10;
 
   // Ejecutar algoritmo A*
   Algorithm astar(g, start_node, goal_node);

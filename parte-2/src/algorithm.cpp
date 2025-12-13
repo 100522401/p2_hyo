@@ -60,10 +60,11 @@ AlgorithmResult Algorithm::run() {
       double new_g = g_[u] + cost;
 
       // Si el coste nuevo es menor desde este camino, actualizar camino
-      if (new_g < g_[v]) {
+      if (!closed_[v] && new_g < g_[v]) {
         g_[v] = new_g;
         parent_[v] = u;
         double f = new_g + h(v);
+
         open_.push(Node(v, f));
       }
     }
