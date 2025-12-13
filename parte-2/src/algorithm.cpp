@@ -1,39 +1,83 @@
+#pragma once
 #include "algorithm.hpp"
+#include <algorithm> // for std::reverse
 #include <cmath>
 
-double Algorithm::h(Node n) {
-  // Haversine distance in meters
-  double lat1 = graph_.coords[n.id].lat;
-  double lon1 = graph_.coords[n.id].lon;
-  double lat2 = graph_.coords[goal_.id].lat;
-  double lon2 = graph_.coords[goal_.id].lon;
+// Heurística: distancia Haversine entre el nodo n y el goal
+double Algorithm::h(int n) {
+  const Coord &a = graph_.coords[n];
+  const Coord &b = graph_.coords[goal_];
 
-  // Convert degrees to radians
-  lat1 *= M_PI / 180.0;
-  lon1 *= M_PI / 180.0;
-  lat2 *= M_PI / 180.0;
-  lon2 *= M_PI / 180.0;
+  double lat1 = a.lat * M_PI / 180.0;
+  double lon1 = a.lon * M_PI / 180.0;
+  double lat2 = b.lat * M_PI / 180.0;
+  double lon2 = b.lon * M_PI / 180.0;
 
   double dlat = lat2 - lat1;
   double dlon = lon2 - lon1;
 
-  double a = sin(dlat / 2) * sin(dlat / 2) +
-             cos(lat1) * cos(lat2) * sin(dlon / 2) * sin(dlon / 2);
-  double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  double sin_dlat2 = sin(dlat / 2.0);
+  double sin_dlon2 = sin(dlon / 2.0);
 
-  const double R = 6371000; // Earth radius in meters
+  double a_h =
+      sin_dlat2 * sin_dlat2 + cos(lat1) * cos(lat2) * sin_dlon2 * sin_dlon2;
+  double c = 2.0 * atan2(sqrt(a_h), sqrt(1.0 - a_h));
+
+  const double R = 6371000.0; // radio de la Tierra en metros
   return R * c;
 }
 
-double Algorithm::g(int n) { return closed_.get(n).g; }
+// Método principal: ejecuta A* y devuelve el camino y coste
+AlgorithmResult Algorithm::run() {
+  // Reinicializar SOA
+  std::fill(g_.begin(), g_.end(), INF);
+  std::fill(parent_.begin(), parent_.end(), -1);
+  std::fill(closed_.begin(), closed_.end(), 0);
 
-double Algorithm::f(int n) { return g(n) + h(n); }
+  // Inicialización nodo inicial
+  g_[start_] = 0.0;
+  open_.push(Node(start_, h(start_)));
 
-std::vector<int> Algorithm::astar() {
-  // Initialize lists
-  open_.push(start_);
+  while (!open_.empty()) {
+    Node current = open_.pop();
+    int u = current.id;
 
-  start_.g = 0;
-  start_.parent = -1;
-  closed_.insert(
+    if (closed_[u])
+      continue; // ya procesado
+
+    closed_[u] = 1;
+
+    if (u == goal_)
+      break; // objetivo alcanzado
+
+    // Iterar vecinos desde CSR
+    auto [begin, end] = graph_.neighbours(u);
+    for (auto it = begin; it != end; ++it) {
+      int v = *it;
+      int edge_idx = it - begin + graph_.row_ptr[u];
+      double cost = static_cast<double>(graph_.weights[edge_idx]);
+      double new_g = g_[u] + cost;
+
+      if (new_g < g_[v]) {
+        g_[v] = new_g;
+        parent_[v] = u;
+        double f = new_g + h(v);
+        open_.push(Node(v, f));
+      }
+    }
+  }
+
+  // Reconstruir camino desde goal a start
+  std::vector<int> path;
+  double total_cost = g_[goal_];
+  int u = goal_;
+  if (parent_[u] != -1 || u == start_) {
+    while (u != -1) {
+      path.push_back(u);
+      u = parent_[u];
+    }
+    std::reverse(path.begin(), path.end());
+  }
+
+  return AlgorithmResult{path, total_cost};
 }
