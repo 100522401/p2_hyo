@@ -5,7 +5,9 @@
 
 class Algorithm {
 public:
-  Algorithm(Graph const &g, int start, int goal);
+  Algorithm(Graph &g, int start, int goal)
+      : g_(g), start_(start), current_(start), goal_(goal), open_(),
+        closed_(g.n) {}
 
   // Node cost functions
   [[nodiscard]] double f(int n);

@@ -11,10 +11,17 @@ struct ClosedNode {
 
 class ClosedList {
 private:
-  std::vector<ClosedNode> closed;
+  std::vector<ClosedNode> closed_;
 
 public:
-  void insert(ClosedNode node);
+  // Constructor reserva espacio
+  ClosedList(int size) : closed_(size) {}
+
+  // Insertar/actualizar nodo por índice
+  void insert(const ClosedNode &node) { closed_[node.id] = node; }
+
+  // Obtener nodo por índice
+  ClosedNode &get(int id) { return closed_[id]; }
 };
 
 #endif

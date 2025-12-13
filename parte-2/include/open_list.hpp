@@ -10,18 +10,17 @@ struct Node {
 
 class OpenList {
 private:
-  std::vector<Node> openlist; // va a estar siempre ordenada por f
+  std::vector<Node> openlist_; // va a estar siempre ordenada por f
 
-public:
 public:
   // Constructor
   OpenList() = default;
 
-  void insert_neighbors(std::vector<Node> &neighbors);
+  void insert_nodes(std::vector<Node> &neighbors);
 
   Node pop();
 
-  bool empty() { return openlist.empty(); }
+  bool empty() { return openlist_.empty(); }
 };
 
 #endif
