@@ -5,7 +5,6 @@
 
 struct ClosedNode {
   int id;
-  double g;
   int parent;
 };
 
