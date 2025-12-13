@@ -1,4 +1,3 @@
-#pragma once
 #include "algorithm.hpp"
 #include <algorithm> // for std::reverse
 #include <cmath>
@@ -53,11 +52,14 @@ AlgorithmResult Algorithm::run() {
     // Iterar vecinos desde CSR
     auto [begin, end] = graph_.neighbours(u);
     for (auto it = begin; it != end; ++it) {
+
+      // Inicializar coste nuevo
       int v = *it;
       int edge_idx = it - begin + graph_.row_ptr[u];
       double cost = static_cast<double>(graph_.weights[edge_idx]);
       double new_g = g_[u] + cost;
 
+      // Si el coste nuevo es menor desde este camino, actualizar camino
       if (new_g < g_[v]) {
         g_[v] = new_g;
         parent_[v] = u;
