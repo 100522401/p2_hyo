@@ -3,25 +3,18 @@
 
 #include <vector>
 
-struct ClosedNode {
-  int id;
-  double g; // Coste acumulado
-  int parent;
-};
-
 class ClosedList {
 private:
-  std::vector<ClosedNode> closed_;
+  std::vector<char> closed_;
 
 public:
-  // Constructor reserva espacio
+  // Constructor reserves space
   ClosedList(int size) : closed_(size) {}
 
-  // Insertar/actualizar nodo por índice
-  void insert(const ClosedNode &node) { closed_[node.id] = node; }
+  // Methods
+  inline void close(int n) { closed_[n] = 1; }
 
-  // Obtener nodo por índice
-  ClosedNode &get(int id) { return closed_[id]; }
+  inline bool is_closed(int n) { return closed_[n]; }
 };
 
 #endif
