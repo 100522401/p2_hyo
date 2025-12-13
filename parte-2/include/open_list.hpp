@@ -16,7 +16,7 @@ public:
   // Constructor
   OpenList() = default;
 
-  void insert_nodes(std::vector<Node> &neighbors);
+  void insert_neighbors(std::vector<Node> &neighbors);
 
   Node pop();
 
