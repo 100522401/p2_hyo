@@ -1,12 +1,8 @@
 #ifndef OPEN_LIST_H
 #define OPEN_LIST_H
 
+#include "node.hpp"
 #include <vector>
-
-struct Node {
-  int id;
-  double f; // f(n) = g(n) + h(n)
-};
 
 class OpenList {
 private:
@@ -16,6 +12,7 @@ public:
   // Constructor
   OpenList() = default;
 
+  void push(Node n);
   void insert_neighbors(std::vector<Node> &neighbors);
 
   Node pop();

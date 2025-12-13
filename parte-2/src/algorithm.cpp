@@ -1,12 +1,12 @@
 #include "algorithm.hpp"
 #include <cmath>
 
-double Algorithm::h(int n) {
+double Algorithm::h(Node n) {
   // Haversine distance in meters
-  double lat1 = graph_.coords[n].lat;
-  double lon1 = graph_.coords[n].lon;
-  double lat2 = graph_.coords[goal_].lat;
-  double lon2 = graph_.coords[goal_].lon;
+  double lat1 = graph_.coords[n.id].lat;
+  double lon1 = graph_.coords[n.id].lon;
+  double lat2 = graph_.coords[goal_.id].lat;
+  double lon2 = graph_.coords[goal_.id].lon;
 
   // Convert degrees to radians
   lat1 *= M_PI / 180.0;
@@ -28,3 +28,12 @@ double Algorithm::h(int n) {
 double Algorithm::g(int n) { return closed_.get(n).g; }
 
 double Algorithm::f(int n) { return g(n) + h(n); }
+
+std::vector<int> Algorithm::astar() {
+  // Initialize lists
+  open_.push(start_);
+
+  start_.g = 0;
+  start_.parent = -1;
+  closed_.insert(
+}

@@ -35,6 +35,8 @@ void OpenList::insert_neighbors(std::vector<Node> &neighbors) {
   openlist_.swap(result);
 }
 
+void OpenList::push(Node n) { openlist_.push_back(n); }
+
 Node OpenList::pop() {
   Node n = openlist_.back();
   openlist_.pop_back();

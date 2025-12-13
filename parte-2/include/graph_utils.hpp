@@ -1,7 +1,4 @@
 #pragma once
-#include "closed_list.hpp"
-#include "open_list.hpp"
-#include <utility>
 #include <vector>
 
 struct Coord {
