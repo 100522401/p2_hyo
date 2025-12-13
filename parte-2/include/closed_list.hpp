@@ -5,6 +5,7 @@
 
 struct ClosedNode {
   int id;
+  double g; // Coste acumulado
   int parent;
 };
 

@@ -3,10 +3,10 @@
 
 double Algorithm::h(int n) {
   // Haversine distance in meters
-  double lat1 = g_.coords[n].lat;
-  double lon1 = g_.coords[n].lon;
-  double lat2 = g_.coords[goal_].lat;
-  double lon2 = g_.coords[goal_].lon;
+  double lat1 = graph_.coords[n].lat;
+  double lon1 = graph_.coords[n].lon;
+  double lat2 = graph_.coords[goal_].lat;
+  double lon2 = graph_.coords[goal_].lon;
 
   // Convert degrees to radians
   lat1 *= M_PI / 180.0;
@@ -24,3 +24,7 @@ double Algorithm::h(int n) {
   const double R = 6371000; // Earth radius in meters
   return R * c;
 }
+
+double Algorithm::g(int n) { return closed_.get(n).g; }
+
+double Algorithm::f(int n) { return g(n) + h(n); }

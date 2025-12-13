@@ -6,7 +6,7 @@
 class Algorithm {
 public:
   Algorithm(Graph &g, int start, int goal)
-      : g_(g), start_(start), current_(start), goal_(goal), open_(),
+      : graph_(g), start_(start), current_(start), goal_(goal), open_(),
         closed_(g.n) {}
 
   // Node cost functions
@@ -16,7 +16,7 @@ public:
 
 private:
   // Graph components
-  Graph const &g_;
+  Graph const &graph_;
   int start_;
   int current_;
   int goal_;
