@@ -2,22 +2,29 @@
 #define OPEN_LIST_H
 
 #include "node.hpp"
+#include <functional>
+#include <queue>
 #include <vector>
 
 class OpenList {
 private:
-  std::vector<Node> openlist_; // va a estar siempre ordenada por f
+  std::priority_queue<Node, std::vector<Node>, std::greater<>> openlist_;
 
 public:
   // Constructor
   OpenList() = default;
 
-  void push(Node n);
-  void insert_neighbors(std::vector<Node> &neighbors);
+  // List operations
+  inline void push(Node const &n) { openlist_.push(n); }
 
-  Node pop();
+  inline Node pop() {
+    Node n = openlist_.top();
+    openlist_.pop();
+    return n;
+  };
 
-  bool empty() { return openlist_.empty(); }
+  // List properties
+  inline bool empty() { return openlist_.empty(); }
 };
 
 #endif
