@@ -1,23 +1,20 @@
 #ifndef CLOSED_LIST_H
 #define CLOSED_LIST_H
 
-#include <cstddef>
 #include <vector>
+
+struct ClosedNode {
+  int id;
+  double g;
+  int parent;
+};
 
 class ClosedList {
 private:
-  std::vector<char> mark; // 0 = no abierto, 1 = abierto
+  std::vector<ClosedNode> closed;
 
 public:
-  // Constructor
-  ClosedList(size_t n) { mark = std::vector<char>(n, 0); }
-
-  inline bool membership(size_t v) { // devuelve True si el nodo se ha abierto,
-                                     // False caso contrario
-    return mark[v] == 1;
-  }
-
-  inline void insert(size_t v) { mark[v] = 1; }
+  void insert(ClosedNode node);
 };
 
 #endif

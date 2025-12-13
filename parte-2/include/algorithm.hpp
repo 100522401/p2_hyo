@@ -5,14 +5,16 @@
 
 class Algorithm {
 public:
-  Algorithm(Graph g, int start, int goal);
+  Algorithm(Graph const &g, int start, int goal);
 
-  // Heuristic function h(n)
+  // Node cost functions
+  [[nodiscard]] double f(int n);
+  [[nodiscard]] double g(int n);
   [[nodiscard]] double h(int n);
 
 private:
   // Graph components
-  Graph g_;
+  Graph const &g_;
   int start_;
   int current_;
   int goal_;

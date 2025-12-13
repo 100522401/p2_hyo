@@ -42,7 +42,12 @@ public:
    *    - Puntero que indica el final de los vecinos del nodo u en col_idx (uno
    * después del último)
    */
-  inline std::pair<const int *, const int *> neighbors(int u) const {
-    return {col_idx.data() + row_ptr[u], col_idx.data() + row_ptr[u + 1]};
+  // inline std::pair<const int *, const int *> neighbors(int u) const {
+  //   return {col_idx.data() + row_ptr[u], col_idx.data() + row_ptr[u + 1]};
+  // }
+
+  std::vector<int> neighbours(int node) const {
+    return std::vector<int>(col_idx.begin() + row_ptr[node],
+                            col_idx.begin() + row_ptr[node + 1]);
   }
 };
