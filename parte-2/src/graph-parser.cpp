@@ -65,7 +65,7 @@ inline int fastAtoiSigned(const char *&p, const char *end) {
 Graph GraphParser::parse() {
   ifstream fin(gr_file);
   if (!fin.is_open()) {
-    cerr << "[GraphParser] Could not open file: " << gr_file << endl;
+    cerr << "[GraphParser] No se pudo abrir el archivo: " << gr_file << endl;
     return Graph();
   }
 
@@ -188,16 +188,16 @@ Graph GraphParser::parse() {
 
   // Create row_ptr
   g.row_ptr[0] = 0;
-  cerr << "[DEBUG] row_ptr starts:" << endl;
+  cerr << "[DEBUG] row_ptr empieza:" << endl;
   for (int i = 0; i < n; i++) {
     g.row_ptr[i + 1] = g.row_ptr[i] + count[i];
   }
-  cerr << "[DEBUG] row_ptr ends:" << endl;
+  cerr << "[DEBUG] row_ptr acaba:" << endl;
 
   // Create temp_ptr
   std::vector<int> temp_ptr = g.row_ptr;
 
-  cerr << "[DEBUG] edges start:" << endl;
+  cerr << "[DEBUG] aristas empiezan:" << endl;
 
   // Insert edges into CSR
   for (const auto &e : edges) {
@@ -206,7 +206,8 @@ Graph GraphParser::parse() {
     g.weights[pos] = e.w;
   }
 
-  cerr << "[DEBUG] Aristas terminan: " << g.row_ptr[n] << " edges stored.\n";
+  cerr << "[DEBUG] Aristas terminan: " << g.row_ptr[n]
+       << " aristas almacenadas.\n";
 
   fin.close();
 
@@ -220,21 +221,22 @@ Graph GraphParser::parse_debug() {
   Graph g = parse();
   auto end = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(end - start).count();
-  cout << "[GraphParser] Parsing time: " << duration << " ms" << endl;
-  cout << "[GraphParser] Number of nodes: " << g.n << endl;
-  cout << "[GraphParser] Number of edges: " << g.m << endl;
+  cout << "[GraphParser] Tiempo de parseo: " << duration << " ms" << endl;
+  cout << "[GraphParser] Número de nodos: " << g.n << endl;
+  cout << "[GraphParser] Número de aristas: " << g.m << endl;
   return g;
 }
 
 void GraphParser::parseNodes(Graph &g) const {
   ifstream fin(co_file);
   if (!fin.is_open()) {
-    cerr << "[GraphParser] Could not open .co file: " << co_file << endl;
+    cerr << "[GraphParser] No se pudo abrir el archivo .co: " << co_file
+         << endl;
     return;
   }
 
   string line;
-  cerr << "[DEBUG] nodes start:" << endl;
+  cerr << "[DEBUG] nodos empieza:" << endl;
 
   while (getline(fin, line)) {
     if (line.empty() || line[0] == 'c') {
@@ -269,7 +271,7 @@ void GraphParser::parseNodes(Graph &g) const {
 
     g.coords[id - 1] = {lon, lat};
   }
-  cerr << "[DEBUG] nodes end:" << endl;
+  cerr << "[DEBUG] nodos acaba:" << endl;
 
   fin.close();
 }
