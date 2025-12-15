@@ -9,7 +9,7 @@ public:
   int id;
   double f; // f(n) = g(n) + h(n)
 
-  // Sobrecargar el operador > para que se puedan comparar nodos por f
-  // (usado en la lista abierta para ordenarla).
+  // Override '>' operator so that nodes can be sorted by their 'f' attribute
+  // (used in OpenList to sort nodes).
   bool operator>(const Node &other) const { return f > other.f; }
 };

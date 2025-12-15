@@ -2,7 +2,7 @@
 #include <algorithm> // for std::reverse
 #include <cmath>
 
-// Heurística: distancia Haversine entre el nodo n y el goal
+// Heuristic: Haversine distance between n and goal
 double Algorithm::h(int n) {
   const Coord &a = graph_.coords[n];
   const Coord &b = graph_.coords[goal_];
@@ -22,20 +22,20 @@ double Algorithm::h(int n) {
       sin_dlat2 * sin_dlat2 + cos(lat1) * cos(lat2) * sin_dlon2 * sin_dlon2;
   double c = 2.0 * atan2(sqrt(a_h), sqrt(1.0 - a_h));
 
-  const double R = 6371000.0; // radio de la Tierra en metros
+  const double R = 6371000.0; // Earth Radius in meters
   return R * c;
 }
 
-// Método principal: ejecuta A* y devuelve el camino y coste
+// Main method: runs A* and returns path and cost.
 AlgorithmResult Algorithm::run() {
-  // Reinicializar SOA
+  // Reinitialize SOA
   std::fill(g_.begin(), g_.end(), INF);
   std::fill(parent_.begin(), parent_.end(), -1);
   std::fill(closed_.begin(), closed_.end(), 0);
 
   std::size_t expansions = 0;
 
-  // Inicialización nodo inicial
+  // Initialize starting node
   g_[start_] = 0.0;
   open_.push(Node(start_, h(start_)));
 
@@ -43,26 +43,29 @@ AlgorithmResult Algorithm::run() {
     Node current = open_.pop();
     int u = current.id;
 
+    // Case: node already processed
     if (closed_[u])
-      continue; // ya procesado
-      
-    closed_[u] = 1;
-    expansions++;  
-      
-    if (u == goal_)
-      break; // objetivo alcanzado
+      continue;
 
-    // Iterar vecinos desde CSR
+    // Mark node as processed
+    closed_[u] = 1;
+    expansions++;
+
+    // If objective reached, stop
+    if (u == goal_)
+      break;
+
+    // Iterate neighbours through CSR
     auto [begin, end] = graph_.neighbours(u);
     for (auto it = begin; it != end; ++it) {
 
-      // Inicializar coste nuevo
+      // Initialize new cost
       int v = *it;
       int edge_idx = it - begin + graph_.row_ptr[u];
       double cost = static_cast<double>(graph_.weights[edge_idx]);
       double new_g = g_[u] + cost;
 
-      // Si el coste nuevo es menor desde este camino, actualizar camino
+      // If the new cost is lower, update path
       if (!closed_[v] && new_g < g_[v]) {
         g_[v] = new_g;
         parent_[v] = u;
@@ -73,8 +76,7 @@ AlgorithmResult Algorithm::run() {
     }
   }
 
-  
-  // Reconstruir camino desde goal a start
+  // Rebuild path from start to goal
   std::vector<int> path;
   double total_cost = g_[goal_];
   int u = goal_;
