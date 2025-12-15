@@ -1,49 +1,117 @@
 #include "algorithm.hpp"
 #include "graph_parser.hpp"
+#include <chrono>
 #include <iostream>
+#include <fstream>
 
-int main() {
+using namespace std;
+using namespace std::chrono;
+
+static int edge_cost(Graph const &g, int u, int v) {
+  auto [begin, end] = g.neighbours(u);
+  for (auto it = begin; it != end; ++it) {
+    if (*it == v) {
+      int edge_idx = it - begin + g.row_ptr[u];
+      return g.weights[edge_idx];
+    }
+  }
+  return -1;
+}
+
+
+int main(int argc, char** argv) {
+
+  if (argc != 5) {
+    // ./programa vertice-1 vertice-2 nombre-del-mapa fichero-salida
+    std::cerr << "Uso: " << argv[0]
+              << " <vertice-1> <vertice-2> <nombre-del-mapa> <fichero-salida>\n";
+    return 1;
+  }
+
+  int start_node = std::stoi(argv[1]);
+  int goal_node = std::stoi(argv[2]);
+  std::string map_name = argv[3];
+  std::string output_file = argv[4];
+
+  // Convertimos a base 0
+  start_node--;
+  goal_node--;
+
+  if (start_node < 0 || goal_node < 0) {
+    std::cerr << "Los vértices deben ser >= 1. \n";
+    return 1;
+  }
   // Inicializar parser
-  GraphParser parser("../graph-data/USA-road-d.USA");
+  GraphParser parser(map_name);
+  
+  // Iniciamos cronómetro
+  auto start = std::chrono::high_resolution_clock::now();
 
   // Parsear grafo
   Graph g = parser.parse_debug();
 
-  int u = 2; // nodo 3 en base 0
-
-  std::cout << "Vecinos del nodo 3 (indice 2):\n";
-
-  auto [begin, end] = g.neighbours(u);
-  for (auto it = begin; it != end; ++it) {
-    int v = *it;
-    int edge_idx = (it - begin) + g.row_ptr[u];
-    int w = g.weights[edge_idx];
-
-    std::cout << "3 -> " << (v + 1) << "  peso = " << w << "\n";
+  // const int n_nodos = g.n;
+  // const int n_aristas = g.m;
+  const int n_nodes = g.row_ptr.size() - 1;
+  const int n_edges = g.weights.size();
+  if (n_nodes != g.n || n_edges != g.m) {
+    std::cerr << "Error en el parseo" << std::endl;
+    return 1;
   }
 
-  // Definir nodos de prueba
-  int start_node = 2;
-  int goal_node = 10;
+  if (start_node >= n_nodes || goal_node >= n_nodes) {
+    std::cerr << "Vertices fuera de rango. #vertices = " << n_nodes
+              << "\n";
+    return 1;
+  }
 
+ 
   // Ejecutar algoritmo A*
+  auto start_algorithm = std::chrono::high_resolution_clock::now();
   Algorithm astar(g, start_node, goal_node);
   AlgorithmResult result = astar.run();
+  
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(end - start).count();
+  auto duration_algorithm = duration_cast<milliseconds>(end - start_algorithm).count();
+  double secs_algorithm = duration_algorithm / 1000.0;
 
-  // Mostrar resultados
-  if (!result.path.empty()) {
-    std::cout << "Camino encontrado desde " << start_node << " hasta "
-              << goal_node << ":\n";
-    for (size_t i = 0; i < result.path.size(); ++i) {
-      std::cout << result.path[i];
-      if (i + 1 < result.path.size())
-        std::cout << " -> ";
-    }
-    std::cout << "\nCoste total: " << result.cost << "\n";
-  } else {
-    std::cout << "No se ha encontrado camino entre " << start_node << " y "
-              << goal_node << "\n";
+  // Prints enunciado
+  std::cout << "# vertices: " << n_nodes << "\n";
+  std::cout << "# arcos : " << n_edges << "\n";
+
+  
+  if (result.path.empty()) {
+    std::cout << "No se ha encontrado camino entre " << start_node << " y " << goal_node << "\n";
+    std::cout << "Tiempo de ejecucion: " <<  duration << " milisegundos\n";
+    return 0;
   }
+              
+  std::cout << "Solución óptima encontrada con coste " << result.cost << "\n";
+  std::cout << "Tiempo de ejecucion: " <<  duration << " milisegundos\n";
+  std::cout << "Expansiones: " << result.expansions
+            << " (" << (secs_algorithm > 0.0 ? (result.expansions / secs_algorithm) : 0.0)
+            << " nodes/sec)\n";
+
+
+  std::ofstream fout(output_file);
+  if (!fout.is_open()) {
+    std::cerr << "No se pudo abrir fichero de salida: " << output_file << "\n";
+    return 1;
+  }
+
+  for (size_t i = 0; i < result.path.size(); ++i) {
+    int u = result.path[i];
+    fout << (u + 1); // base 1
+
+    if (i + 1 < result.path.size()) {
+      int v = result.path[i + 1];
+      int w = edge_cost(g, u, v);
+      fout << " - (" << w << ") - ";
+    }
+  }
+  fout << "\n";
+  fout.close();
 
   return 0;
 }

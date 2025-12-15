@@ -7,6 +7,7 @@
 struct AlgorithmResult {
   std::vector<int> path;
   double cost;
+  std::size_t expansions;
 };
 
 class Algorithm {

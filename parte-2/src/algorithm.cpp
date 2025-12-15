@@ -33,6 +33,8 @@ AlgorithmResult Algorithm::run() {
   std::fill(parent_.begin(), parent_.end(), -1);
   std::fill(closed_.begin(), closed_.end(), 0);
 
+  std::size_t expansions = 0;
+
   // Inicialización nodo inicial
   g_[start_] = 0.0;
   open_.push(Node(start_, h(start_)));
@@ -43,9 +45,10 @@ AlgorithmResult Algorithm::run() {
 
     if (closed_[u])
       continue; // ya procesado
-
+      
     closed_[u] = 1;
-
+    expansions++;  
+      
     if (u == goal_)
       break; // objetivo alcanzado
 
@@ -70,6 +73,7 @@ AlgorithmResult Algorithm::run() {
     }
   }
 
+  
   // Reconstruir camino desde goal a start
   std::vector<int> path;
   double total_cost = g_[goal_];
@@ -82,5 +86,5 @@ AlgorithmResult Algorithm::run() {
     std::reverse(path.begin(), path.end());
   }
 
-  return AlgorithmResult{path, total_cost};
+  return AlgorithmResult{path, total_cost, expansions};
 }
