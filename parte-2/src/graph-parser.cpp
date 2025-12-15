@@ -65,7 +65,7 @@ inline int fastAtoiSigned(const char *&p, const char *end) {
 Graph GraphParser::parse() {
   ifstream fin(gr_file);
   if (!fin.is_open()) {
-    cerr << "[GraphParser] No se pudo abrir el archivo: " << gr_file << endl;
+    cerr << "[GraphParser] Could not open file: " << gr_file << endl;
     return Graph();
   }
 
@@ -77,17 +77,17 @@ Graph GraphParser::parse() {
   std::vector<int> count;
   std::vector<Edge> edges;
 
-  // Leer cabecera
+  // Read header
   while (getline(fin, line)) {
     if (line.empty()) {
       continue;
     }
 
-    // puntero a los caracteres de la línea
+    // pointer to line characters
     const char *p = line.data();
     const char *end = p + line.size();
 
-    // Se saltan espacios iniciales
+    // Skip leading spaces
     jumpSpaces(p, end);
 
     if (p == end || *p == 'c') {
@@ -95,24 +95,24 @@ Graph GraphParser::parse() {
     }
 
     if (*p == 'p') {
-      p++; // saltamos caracter "p"
+      p++; // skip 'p' character
 
       jumpSpaces(p, end);
 
-      // Se saltar sp
+      // Skip "sp"
       jumpChars(p, end);
       jumpSpaces(p, end);
 
-      // Parseamos n con from_chars (El puntero p no se mueve)
+      // Parse n
       n = fastAtoi(p, end);
 
-      // Se salta n
+      // Skip n
       jumpSpaces(p, end);
 
-      // Parseamos m con from_chars
+      // Parse m
       m = fastAtoi(p, end);
 
-      // inicializamos vector count con n posiciones
+      // initialize count vector with n positions
       count.assign(n, 0);
 
       cerr << "[DEBUG] Cabecera: n=" << n << " m=" << m << '\n';
@@ -125,51 +125,51 @@ Graph GraphParser::parse() {
       continue;
     }
 
-    // ARISTAS
+    // EDGES
     if (*p == 'e') {
-      p++; // saltamos caracter "a" o "e"
+      p++; // skip 'a' or 'e' character
 
-      // saltamos espacios después de "a" o "e" y llegamos a u
+      // skip spaces after 'a' or 'e' and get to u
       jumpSpaces(p, end);
 
-      // Leer nodo origen u
+      // Read source node u
       int u = fastAtoi(p, end);
       jumpSpaces(p, end);
 
-      //  Leer nodo destino v
+      //  Read destination node v
       int v = fastAtoi(p, end);
 
-      // Pasamos datos a base 0
+      // Convert to 0-based indexing
       u -= 1;
       v -= 1;
       int w = 1;
-      // sumamos al contador
+      // add to counter
       if (u >= 0 && u < n) {
         count[u]++;
         // cerr << "[DEBUG] count[" << u << "] = " << count[u] << endl;
         edges.push_back({u, v, w});
       }
     } else if (*p == 'a') {
-      p++; // saltamos caracter "a" o "e"
+      p++; // skip 'a' or 'e' character
 
-      // saltamos espacios después de "a" o "e" y llegamos a u
+      // skip spaces after 'a' or 'e' and get to u
       jumpSpaces(p, end);
 
-      // Leer nodo origen u
+      // Read source node u
       int u = fastAtoi(p, end);
       jumpSpaces(p, end);
 
-      //  Leer nodo destino v
+      //  Read destination node v
       int v = fastAtoi(p, end);
       jumpSpaces(p, end);
 
-      // Leer weight
+      // Read weight
       int w = fastAtoi(p, end);
 
-      // Pasamos datos a base 0
+      // Convert to 0-based indexing
       u -= 1;
       v -= 1;
-      // sumamos al contador
+      // add to counter
       if (u >= 0 && u < n) {
         count[u]++;
         // cerr << "[DEBUG] count[" << u << "] = " << count[u] << endl;
@@ -181,33 +181,32 @@ Graph GraphParser::parse() {
   fin.close();
 
   /**
-   * CREAR GRAFO CSR
+   * CREATE CSR GRAPH
    */
 
   Graph g(n, m);
 
-  // Se crea row_ptr
+  // Create row_ptr
   g.row_ptr[0] = 0;
-  cerr << "[DEBUG] row_ptr empieza:" << endl;
+  cerr << "[DEBUG] row_ptr starts:" << endl;
   for (int i = 0; i < n; i++) {
     g.row_ptr[i + 1] = g.row_ptr[i] + count[i];
   }
-  cerr << "[DEBUG] row_ptr acaba:" << endl;
+  cerr << "[DEBUG] row_ptr ends:" << endl;
 
-  // Se crea temp_ptr
+  // Create temp_ptr
   std::vector<int> temp_ptr = g.row_ptr;
 
-  cerr << "[DEBUG] aristas empiezan:" << endl;
+  cerr << "[DEBUG] edges start:" << endl;
 
-  // Metemos aristas en CSR
+  // Insert edges into CSR
   for (const auto &e : edges) {
     int pos = temp_ptr[e.u]++;
     g.col_idx[pos] = e.v;
     g.weights[pos] = e.w;
   }
 
-  cerr << "[DEBUG] Aristas terminan: " << g.row_ptr[n]
-       << " aristas almacenadas.\n";
+  cerr << "[DEBUG] Aristas terminan: " << g.row_ptr[n] << " edges stored.\n";
 
   fin.close();
 
@@ -221,22 +220,21 @@ Graph GraphParser::parse_debug() {
   Graph g = parse();
   auto end = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(end - start).count();
-  cout << "[GraphParser] Tiempo de parseo: " << duration << " ms" << endl;
-  cout << "[GraphParser] Número de nodos: " << g.n << endl;
-  cout << "[GraphParser] Número de aristas: " << g.m << endl;
+  cout << "[GraphParser] Parsing time: " << duration << " ms" << endl;
+  cout << "[GraphParser] Number of nodes: " << g.n << endl;
+  cout << "[GraphParser] Number of edges: " << g.m << endl;
   return g;
 }
 
 void GraphParser::parseNodes(Graph &g) const {
   ifstream fin(co_file);
   if (!fin.is_open()) {
-    cerr << "[GraphParser] No se pudo abrir el archivo .co: " << co_file
-         << endl;
+    cerr << "[GraphParser] Could not open .co file: " << co_file << endl;
     return;
   }
 
   string line;
-  cerr << "[DEBUG] nodos empieza:" << endl;
+  cerr << "[DEBUG] nodes start:" << endl;
 
   while (getline(fin, line)) {
     if (line.empty() || line[0] == 'c') {
@@ -246,13 +244,13 @@ void GraphParser::parseNodes(Graph &g) const {
     const char *p = line.data();
     const char *end = p + line.size();
 
-    // Saltar espacios iniciales
+    // Skip leading spaces
     jumpSpaces(p, end);
     if (p == end || *p != 'v') {
       continue;
     }
 
-    p++; // saltar 'v'
+    p++; // skip 'v'
     jumpSpaces(p, end);
 
     int id = fastAtoi(p, end);
@@ -262,16 +260,16 @@ void GraphParser::parseNodes(Graph &g) const {
     int lon_int = fastAtoiSigned(p, end);
     jumpSpaces(p, end);
 
-    // leer latitud
+    // read latitude
     int lat_int = fastAtoiSigned(p, end);
 
-    // DIMACS usa coordenadas multiplicadas por 1e6
+    // DIMACS uses coordinates multiplied by 1e6
     double lon = lon_int / 1e6;
     double lat = lat_int / 1e6;
 
     g.coords[id - 1] = {lon, lat};
   }
-  cerr << "[DEBUG] nodos acaba:" << endl;
+  cerr << "[DEBUG] nodes end:" << endl;
 
   fin.close();
 }

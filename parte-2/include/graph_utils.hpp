@@ -8,14 +8,14 @@ struct Coord {
 
 class Graph {
 public:
-  int n; // número de nodos
-  int m; // número de aristas
+  int n; // number of nodes
+  int m; // number of edges
 
-  /* row_ptr[u] -> dónde empiezan los vecinos de u
-     row_ptr[u+1] -> dónde acaban los vecinos de u*/
+  /* row_ptr[u] -> where neighbors of u start
+     row_ptr[u+1] -> where neighbors of u end */
   std::vector<int> row_ptr;
 
-  /*lugar en el que se almacenan los vecinos de cada nodo*/
+  /* storage for the neighbors of each node */
   std::vector<int> col_idx;
 
   std::vector<int> weights;
@@ -30,10 +30,10 @@ public:
   }
 
   /***
-   * Esta función devuelve dos punteros:
-   *    - Puntero que indica el inicio de los vecinos del nodo u en col_idx
-   *    - Puntero que indica el final de los vecinos del nodo u en col_idx (uno
-   * después del último)
+   * This function returns two pointers:
+   *    - Pointer to the start of neighbors for node u in col_idx
+   *    - Pointer to the end of neighbors for node u in col_idx (one past the
+   * last one)
    */
   inline std::pair<const int *, const int *> neighbours(int u) const {
     return {col_idx.data() + row_ptr[u], col_idx.data() + row_ptr[u + 1]};

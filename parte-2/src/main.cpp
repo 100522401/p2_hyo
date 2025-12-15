@@ -1,8 +1,8 @@
 #include "algorithm.hpp"
 #include "graph_parser.hpp"
 #include <chrono>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace std::chrono;
@@ -18,13 +18,13 @@ static int edge_cost(Graph const &g, int u, int v) {
   return -1;
 }
 
-
-int main(int argc, char** argv) {
+// Main method: Finds shortest path between two nodes on a graph.
+int main(int argc, char **argv) {
 
   if (argc != 5) {
-    // ./programa vertice-1 vertice-2 nombre-del-mapa fichero-salida
-    std::cerr << "Uso: " << argv[0]
-              << " <vertice-1> <vertice-2> <nombre-del-mapa> <fichero-salida>\n";
+    // ./program vertex-1 vertex-2 map-name output-file
+    std::cerr << "Usage: " << argv[0]
+              << " <vertex-1> <vertex-2> <map-name> <output-file>\n";
     return 1;
   }
 
@@ -33,70 +33,72 @@ int main(int argc, char** argv) {
   std::string map_name = argv[3];
   std::string output_file = argv[4];
 
-  // Convertimos a base 0
+  // Convert to base 0
   start_node--;
   goal_node--;
 
   if (start_node < 0 || goal_node < 0) {
-    std::cerr << "Los vértices deben ser >= 1. \n";
+    std::cerr << "Vertices must be >= 1. \n";
     return 1;
   }
-  // Inicializar parser
+  // Initialize parser
   GraphParser parser(map_name);
-  
-  // Iniciamos cronómetro
+
+  // Initialize chrono
   auto start = std::chrono::high_resolution_clock::now();
 
-  // Parsear grafo
+  // Parse graph
   Graph g = parser.parse_debug();
 
-  // const int n_nodos = g.n;
-  // const int n_aristas = g.m;
+  // Check that the number of nodes and edges are correct
   const int n_nodes = g.row_ptr.size() - 1;
   const int n_edges = g.weights.size();
   if (n_nodes != g.n || n_edges != g.m) {
-    std::cerr << "Error en el parseo" << std::endl;
+    std::cerr << "Error during parsing" << std::endl;
     return 1;
   }
-
+  // Check that the vertices are in the graph
   if (start_node >= n_nodes || goal_node >= n_nodes) {
-    std::cerr << "Vertices fuera de rango. #vertices = " << n_nodes
-              << "\n";
+    std::cerr << "Vertices out of range. #vertices = " << n_nodes << "\n";
     return 1;
   }
 
- 
-  // Ejecutar algoritmo A*
+  // Run A* algorithm for shortest path searching
+
+  // Initialize chronometer for time statistics
   auto start_algorithm = std::chrono::high_resolution_clock::now();
   Algorithm astar(g, start_node, goal_node);
   AlgorithmResult result = astar.run();
-  
+
   auto end = std::chrono::high_resolution_clock::now();
+
+  // Get duration
   auto duration = duration_cast<milliseconds>(end - start).count();
-  auto duration_algorithm = duration_cast<milliseconds>(end - start_algorithm).count();
+  auto duration_algorithm =
+      duration_cast<milliseconds>(end - start_algorithm).count();
   double secs_algorithm = duration_algorithm / 1000.0;
 
-  // Prints enunciado
-  std::cout << "# vertices: " << n_nodes << "\n";
-  std::cout << "# arcos : " << n_edges << "\n";
+  // Required prints
+  std::cout << "# nodes: " << n_nodes << "\n";
+  std::cout << "# edges: " << n_edges << "\n";
 
-  
   if (result.path.empty()) {
-    std::cout << "No se ha encontrado camino entre " << start_node << " y " << goal_node << "\n";
-    std::cout << "Tiempo de ejecucion: " <<  duration << " milisegundos\n";
+    std::cout << "No path found between " << start_node << " and " << goal_node
+              << "\n";
+    std::cout << "Execution time: " << duration << " milliseconds\n";
     return 0;
   }
-              
-  std::cout << "Solución óptima encontrada con coste " << result.cost << "\n";
-  std::cout << "Tiempo de ejecucion: " <<  duration << " milisegundos\n";
-  std::cout << "Expansiones: " << result.expansions
-            << " (" << (secs_algorithm > 0.0 ? (result.expansions / secs_algorithm) : 0.0)
-            << " nodes/sec)\n";
 
+  std::cout << "Optimal solution found with cost " << result.cost << "\n";
+  std::cout << "Execution time: " << duration << " milliseconds\n";
+  std::cout << "Expansions: " << result.expansions << " ("
+            << (secs_algorithm > 0.0 ? (result.expansions / secs_algorithm)
+                                     : 0.0)
+            << " nodes/sec)\n";
 
   std::ofstream fout(output_file);
   if (!fout.is_open()) {
-    std::cerr << "No se pudo abrir fichero de salida: " << output_file << "\n";
+    std::cerr << "Could not open output file: " << output_file << "\n";
     return 1;
   }
 
