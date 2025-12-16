@@ -1,5 +1,6 @@
 #include "algorithm.hpp"
 #include "graph_parser.hpp"
+#include <cassert>
 #include <fstream>
 #include <iostream>
 
@@ -64,6 +65,11 @@ int main(int argc, char **argv) {
 
   // Run Dijkstra for comparison
   AlgorithmResult result_dijkstra = astar.run_dijkstra();
+
+  if (result.path != result_dijkstra.path) {
+    std::cerr << "Los caminos encontrados no coinciden" << "\n";
+    return 1;
+  }
 
   // Required prints
   std::cout << "# vertices: " << n_nodes << "\n";
