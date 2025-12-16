@@ -1,9 +1,12 @@
 #include "algorithm.hpp"
 #include <algorithm> // for std::reverse
+#include <chrono>    // Required for std::chrono
 #include <cmath>
+#include <iostream>
 
 // Heuristic: Haversine distance between n and goal
 double Algorithm::h(int n) {
+
   const Coord &a = graph_.coords[n];
   const Coord &b = graph_.coords[goal_];
 
@@ -26,9 +29,15 @@ double Algorithm::h(int n) {
   return R * c;
 }
 
+// "Heuristic" for Dijkstra
+inline double null_h(int n) { return 0.0; }
+
 // Main method: runs A* and returns path and cost.
 AlgorithmResult Algorithm::run() {
-  // Reinitialize SOA
+  // Start chrono for performance testing
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // Initialize SOA for A* parameters (g_, parent_, closed_)
   std::fill(g_.begin(), g_.end(), INF);
   std::fill(parent_.begin(), parent_.end(), -1);
   std::fill(closed_.begin(), closed_.end(), 0);
@@ -87,6 +96,85 @@ AlgorithmResult Algorithm::run() {
     }
     std::reverse(path.begin(), path.end());
   }
+
+  auto end = std::chrono::high_resolution_clock::now();
+
+  auto duration = end - start;
+
+  // Print duration
+  std::cerr
+      << "Tiempo de ejecución A*: "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()
+      << " milisegundos" << std::endl;
+
+  return AlgorithmResult{path, total_cost, expansions};
+}
+
+// Dijkstra Akgorithm for comparison
+AlgorithmResult Algorithm::run_dijkstra() {
+  auto start_time = std::chrono::high_resolution_clock::now();
+
+  // Inicialización
+  std::fill(g_.begin(), g_.end(), INF);
+  std::fill(parent_.begin(), parent_.end(), -1);
+  std::fill(closed_.begin(), closed_.end(), 0);
+
+  std::size_t expansions = 0;
+
+  // Cola de prioridad: (coste acumulado, nodo)
+  // Reusa Node, pero f = g
+  open_.clear();
+  g_[start_] = 0.0;
+  open_.push(Node(start_, 0.0));
+
+  while (!open_.empty()) {
+    Node current = open_.pop();
+    int u = current.id;
+
+    if (closed_[u])
+      continue;
+
+    closed_[u] = 1;
+    expansions++;
+
+    // En Dijkstra esto ES correcto
+    if (u == goal_)
+      break;
+
+    auto [begin, end] = graph_.neighbours(u);
+
+    int idx = graph_.row_ptr[u];
+    for (auto it = begin; it != end; ++it, ++idx) {
+      int v = *it;
+      double cost = static_cast<double>(graph_.weights[idx]);
+      double new_g = g_[u] + cost;
+
+      if (!closed_[v] && new_g < g_[v]) {
+        g_[v] = new_g;
+        parent_[v] = u;
+        open_.push(Node(v, new_g));
+      }
+    }
+  }
+
+  // Reconstrucción del camino
+  std::vector<int> path;
+  double total_cost = g_[goal_];
+
+  if (total_cost < INF) {
+    for (int u = goal_; u != -1; u = parent_[u])
+      path.push_back(u);
+
+    std::reverse(path.begin(), path.end());
+  }
+
+  auto end_time = std::chrono::high_resolution_clock::now();
+
+  std::cerr << "Tiempo de ejecución Dijkstra: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << " ms\n";
 
   return AlgorithmResult{path, total_cost, expansions};
 }

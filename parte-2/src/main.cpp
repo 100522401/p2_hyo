@@ -1,11 +1,7 @@
 #include "algorithm.hpp"
 #include "graph_parser.hpp"
-#include <chrono>
 #include <fstream>
 #include <iostream>
-
-using namespace std;
-using namespace std::chrono;
 
 static int edge_cost(Graph const &g, int u, int v) {
   auto [begin, end] = g.neighbours(u);
@@ -45,9 +41,6 @@ int main(int argc, char **argv) {
   // Initialize parser
   GraphParser parser(map_name);
 
-  // Initialize chrono
-  auto start = std::chrono::high_resolution_clock::now();
-
   // Parse graph
   Graph g = parser.parse_debug();
 
@@ -66,18 +59,11 @@ int main(int argc, char **argv) {
 
   // Run A* algorithm for shortest path searching
 
-  // Initialize chronometer for time statistics
-  auto start_algorithm = std::chrono::high_resolution_clock::now();
   Algorithm astar(g, start_node, goal_node);
   AlgorithmResult result = astar.run();
 
-  auto end = std::chrono::high_resolution_clock::now();
-
-  // Get duration
-  auto duration = duration_cast<milliseconds>(end - start).count();
-  auto duration_algorithm =
-      duration_cast<milliseconds>(end - start_algorithm).count();
-  double secs_algorithm = duration_algorithm / 1000.0;
+  // Run Dijkstra for comparison
+  AlgorithmResult result_dijkstra = astar.run_dijkstra();
 
   // Required prints
   std::cout << "# vertices: " << n_nodes << "\n";
@@ -86,16 +72,12 @@ int main(int argc, char **argv) {
   if (result.path.empty()) {
     std::cout << "No se ha encontrado camino entre " << start_node << " y "
               << goal_node << "\n";
-    std::cout << "Tiempo de ejecucion: " << duration << " milisegundos\n";
     return 0;
   }
 
   std::cout << "Solución óptima encontrada con coste " << result.cost << "\n";
-  std::cout << "Tiempo de ejecucion: " << duration << " milisegundos\n";
-  std::cout << "Expansiones: " << result.expansions << " ("
-            << (secs_algorithm > 0.0 ? (result.expansions / secs_algorithm)
-                                     : 0.0)
-            << " nodes/sec)\n";
+  std::cout << "Expansiones A*: " << result.expansions << "\n";
+  std::cout << "Expansiones Dijkstra: " << result_dijkstra.expansions << "\n";
 
   std::ofstream fout(output_file);
   if (!fout.is_open()) {

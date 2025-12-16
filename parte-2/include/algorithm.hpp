@@ -24,6 +24,9 @@ public:
   // Main method
   [[nodiscard]] AlgorithmResult run();
 
+  // Dijkstra for comparison
+  [[nodiscard]] AlgorithmResult run_dijkstra();
+
 private:
   // Graph components
   Graph const &graph_;

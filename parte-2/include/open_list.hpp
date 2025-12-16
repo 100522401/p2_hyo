@@ -23,6 +23,10 @@ public:
     return n;
   };
 
+  inline void clear() {
+    openlist_ = std::priority_queue<Node, std::vector<Node>, std::greater<>>();
+  }
+
   // List properties
   inline bool empty() { return openlist_.empty(); }
 };
