@@ -19,7 +19,7 @@ public:
         g_(g.n, INF), parent_(g.n, -1) {}
 
   // Heuristic
-  [[nodiscard]] double h(int n);
+  [[nodiscard]] double h(int n, double cos_lat_goal);
 
   // Main method
   [[nodiscard]] AlgorithmResult run();
