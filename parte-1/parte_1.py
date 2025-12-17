@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import constraint
 import sys
 
@@ -122,6 +123,47 @@ def write_solution(solution, n, f):
     write_board(matrix, f)
 
 
+def solve(matrix: list[list[str]]):
+    """
+    Configura y resuelve el problema de Binairo CSP para una matriz dada.
+
+    Args:
+        matrix (list[str]): El tablero de Binairo a resolver.
+
+    Returns:
+        list[dict]: Una lista de soluciones encontradas. Cada solución es un
+                    diccionario que mapea coordenadas (fila, col) a un valor ('X' o 'O').
+    """
+    n = len(matrix)
+    manager = constraint.Problem()
+
+    # Variables y dominios
+    domain_X = ["X"]
+    domain_O = ["O"]
+    domain_empty = ["X", "O"]
+
+    for i in range(n):
+        for j in range(n):
+            variable = (i, j)
+            if matrix[i][j] == "X":
+                manager.addVariable(variable, domain_X)
+            elif matrix[i][j] == "O":
+                manager.addVariable(variable, domain_O)
+            else:
+                manager.addVariable(variable, domain_empty)
+
+    # Restricciones
+    for i in range(n):
+        row_vars = [(i, j) for j in range(n)]
+        col_vars = [(j, i) for j in range(n)]
+        manager.addConstraint(equalAppearances, row_vars)
+        manager.addConstraint(maxTwoOnARow, row_vars)
+        manager.addConstraint(equalAppearances, col_vars)
+        manager.addConstraint(maxTwoOnARow, col_vars)
+
+    return manager.getSolutions()
+
+
 def main():
     """Solves the Binairo CSP with python-constraint.
     Params:
@@ -138,51 +180,20 @@ def main():
 
     matrix = parser(route_in)
 
-    # Create a new problem
-    manager = constraint.Problem()
-
-    # Variables
-    domain_X = ["X"]
-    domain_O = ["O"]
-    domain_empty = ["X", "O"]
-
+    # Resolver el problema
+    solutions = solve(matrix)
     n = len(matrix)
-    variables = []
 
-    # Add variables to the problem.
-    for i in range(n):
-        for j in range(n):
-            variable = (i, j)
-            variables.append(variable)
-            if matrix[i][j] == "X":
-                manager.addVariable(variable, domain_X)
-            elif matrix[i][j] == "O":
-                manager.addVariable(variable, domain_O)
-            else:
-                manager.addVariable(variable, domain_empty)
-
-    # Constraints
-    for i in range(n):  # Rows
-        row_vars = [(i, j) for j in range(n)]
-        manager.addConstraint(equalAppearances, row_vars)
-        manager.addConstraint(maxTwoOnARow, row_vars)
-
-    for j in range(n):  # Cols
-
-        col_vars = [(i, j) for i in range(n)]
-        manager.addConstraint(equalAppearances, col_vars)
-        manager.addConstraint(maxTwoOnARow, col_vars)
-
-    # Solutions
-    solutions = manager.getSolutions()
+    # Imprimir resultados en la consola
     print_board(matrix)
     print(f"Se han encontrado {len(solutions)} soluciones.")
 
-    # Write the first solution, if exists, to outpath
+    # Escribir el tablero inicial y la primera solución en el fichero de salida
     with open(route_out, "w") as f:
         write_board(matrix, f)
         f.write("\n")
         if len(solutions) > 0:
+            f.write("Solución encontrada:\n")
             write_solution(solutions[0], n, f)
 
 
