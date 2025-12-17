@@ -1,5 +1,6 @@
 #include "graph_parser.hpp"
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -266,8 +267,8 @@ void GraphParser::parseNodes(Graph &g) const {
     int lat_int = fastAtoiSigned(p, end);
 
     // DIMACS uses coordinates multiplied by 1e6
-    double lon = lon_int / 1e6;
-    double lat = lat_int / 1e6;
+    double lon = lon_int / 1e6 * (M_PI / 180.0);
+    double lat = lat_int / 1e6 * (M_PI / 180.0);
 
     g.coords[id - 1] = {lon, lat};
   }

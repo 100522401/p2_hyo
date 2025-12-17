@@ -127,6 +127,8 @@ int main(int argc, char **argv) {
   if (run_dijkstra)
     std::cout << "Expansiones Dijkstra: " << dijkstra_result.expansions << "\n";
 
+  // Print nodes/sec
+
   /* =======================
    * Output (file)
    * ======================= */

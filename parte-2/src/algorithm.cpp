@@ -10,10 +10,10 @@ double Algorithm::h(int n) {
   const Coord &a = graph_.coords[n];
   const Coord &b = graph_.coords[goal_];
 
-  double lat1 = a.lat * M_PI / 180.0;
-  double lon1 = a.lon * M_PI / 180.0;
-  double lat2 = b.lat * M_PI / 180.0;
-  double lon2 = b.lon * M_PI / 180.0;
+  double lat1 = a.lat;
+  double lon1 = a.lon;
+  double lat2 = b.lat;
+  double lon2 = b.lon;
 
   double dlat = lat2 - lat1;
   double dlon = lon2 - lon1;
@@ -107,6 +107,15 @@ AlgorithmResult Algorithm::run() {
       << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()
       << " milisegundos" << std::endl;
 
+  // Print nodes/sec
+  std::cerr << "Nodos/seg: "
+            << (expansions * 1000.0) /
+                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                       duration)
+                       .count()
+            << std::endl;
+  // std::cerr << "Expansiones: " << expansions << std::endl;
+
   return AlgorithmResult{path, total_cost, expansions};
 }
 
@@ -175,6 +184,15 @@ AlgorithmResult Algorithm::run_dijkstra() {
                                                                      start_time)
                    .count()
             << " ms\n";
+
+  // Print nodes/sec
+  std::cerr << "Nodos/seg: "
+            << (expansions * 1000.0) /
+                   std::chrono::duration_cast<std::chrono::milliseconds>(
+                       end_time - start_time)
+                       .count()
+            << std::endl;
+  // std::cerr << "Expansiones: " << expansions << std::endl;
 
   return AlgorithmResult{path, total_cost, expansions};
 }
