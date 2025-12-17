@@ -22,7 +22,7 @@ def parser(route):
                     raise ValueError(
                         f"Valor inválido en la línea {line_idx}: {character}.\n Valores válidos: {valid_values}."
                     )
-            # If everythong OK, add line
+            # If everything OK, add line
             matrix.append(line)
 
     # Matrix validations

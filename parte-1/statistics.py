@@ -135,14 +135,73 @@ def run_and_plot_size_vs_time(
     plt.show()
 
 
+def run_and_plot_fill_vs_time(
+    fill_ratios: List[float], num_runs: int, board_size: int, base_seed: int
+):
+    """
+    Ejecuta mediciones para diferentes ratios de llenado y genera una gráfica
+    de Ocupación vs. Tiempo de ejecución.
+
+    Args:
+        fill_ratios (List[float]): Lista de ratios de llenado a probar (e.g., [0.1, 0.2, 0.3]).
+        num_runs (int): Número de ejecuciones por cada ratio.
+        board_size (int): Tamaño del tablero a mantener constante.
+        base_seed (int): Semilla base para la generación de tableros.
+    """
+    mean_times = []
+    std_devs = []
+
+    print("--- Iniciando experimento: Ocupación de Tablero vs. Tiempo ---")
+    for ratio in fill_ratios:
+        print(f"\n--- Probando ratio de ocupación: {ratio*100:.0f}% ---")
+        times = measure_performance(num_runs, board_size, ratio, base_seed)
+        mean_times.append(np.mean(times))
+        std_devs.append(np.std(times))
+
+    # --- Generación de la gráfica ---
+    fig, ax = plt.subplots()
+
+    # Convertir ratios a porcentajes para el eje X
+    fill_percentages = [r * 100 for r in fill_ratios]
+
+    # Dibujar la línea con los tiempos medios y las barras de error para la desviación
+    ax.errorbar(
+        fill_percentages,
+        mean_times,
+        yerr=std_devs,
+        fmt="-o",
+        capsize=5,
+        label="Tiempo de ejecución promedio",
+    )
+
+    ax.set_xlabel("Porcentaje de Ocupación (%)")
+    ax.set_ylabel("Tiempo de Ejecución (segundos)")
+    ax.set_title(
+        f"Tiempo de Ejecución vs. Ocupación del Tablero\n"
+        f"(Tablero {board_size}x{board_size}, {num_runs} ejecuciones por ratio)"
+    )
+    ax.set_xticks(fill_percentages)  # Asegura que todos los porcentajes aparezcan
+    ax.legend()
+    plt.tight_layout()
+
+    # Guardar la gráfica en un fichero
+    output_filename = "fill_vs_time.png"
+    plt.savefig(output_filename)
+    print(f"\nGráfica guardada como '{output_filename}'")
+
+    plt.show()
+
+
 if __name__ == "__main__":
     # --- Parámetros para el experimento ---
     # Tamaños de tablero a probar (deben ser pares)
     BOARD_SIZES_TO_TEST = [4, 6, 8]
-    NUM_RUNS_PER_SIZE = 100  # Número de tableros a generar por cada tamaño
-    FILL_RATIO_CONSTANT = 0.3  # Ocupación constante para todos los tableros
+    NUM_RUNS = 30  # Número de tableros a generar por cada configuración
     BASE_SEED = 42
 
-    run_and_plot_size_vs_time(
-        BOARD_SIZES_TO_TEST, NUM_RUNS_PER_SIZE, FILL_RATIO_CONSTANT, BASE_SEED
-    )
+    # --- Experimento 1: Tamaño vs. Tiempo ---
+    # run_and_plot_size_vs_time(BOARD_SIZES_TO_TEST, NUM_RUNS, 0.3, BASE_SEED)
+
+    # --- Experimento 2: Ocupación vs. Tiempo ---
+    FILL_RATIOS_TO_TEST = [x / (8) for x in range(1, 8)]
+    run_and_plot_fill_vs_time(FILL_RATIOS_TO_TEST, NUM_RUNS, 6, BASE_SEED)
