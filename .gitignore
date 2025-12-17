@@ -5,6 +5,7 @@ venv/
 *.dat
 __pycache__
 *.pyc
+*.png
 
 graph-data/
 settings.json
