@@ -32,16 +32,16 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  // Parse nodes (in base 0)
-  int start_node = std::stoi(argv[1]) - 1; // base 0
+  // Parse nodes
+  int start_node = std::stoi(argv[1]) - 1; // 0-based
   int goal_node = std::stoi(argv[2]) - 1;
 
-  // Node verifications
+  // Node verification
   if (start_node < 0 || goal_node < 0) {
     Logger::error("Los vértices deben ser >= 1.");
     return 1;
   }
-  // Parse map name and outfile
+  // Parse map name and output file
   std::string map_name = argv[3];
   std::string output_filename = argv[4];
 
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  // Conditionals used for running algorithms
+  // Conditionals for running algorithms
   const bool run_astar = (mode != AlgorithmMode::DIJKSTRA);
   const bool run_dijkstra = (mode != AlgorithmMode::ASTAR);
 

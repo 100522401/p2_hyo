@@ -10,8 +10,7 @@
 
 namespace Logger {
 
-// --- COLORES ANSI (Opcional: Si da problemas en Windows antiguo, déjalos
-// vacíos) ---
+// --- ANSI Colors
 const std::string RESET = "\033[0m";
 const std::string BOLD = "\033[1m";
 const std::string RED = "\033[31m";
@@ -20,17 +19,17 @@ const std::string YELLOW = "\033[33m";
 const std::string BLUE = "\033[34m";
 const std::string CYAN = "\033[36m";
 
-// --- UTILIDADES DE FORMATO ---
+// --- FORMAT UTILITIES ---
 
-// Estructura para poner separadores de miles (1,000,000)
+// Struct to add thousands separators (1,000,000)
 struct ThousandsSeparator : std::numpunct<char> {
   char do_thousands_sep() const override {
     return '.';
-  } // Usa punto o coma según prefieras
+  } // Use dot or comma as you prefer
   std::string do_grouping() const override { return "\3"; }
 };
 
-// Formatea números enteros con separadores: 1000000 -> "1.000.000"
+// Formats integers with separators: 1000000 -> "1.000.000"
 inline std::string fmt_int(long long n) {
   std::stringstream ss;
   ss.imbue(std::locale(std::locale(), new ThousandsSeparator));
@@ -38,7 +37,7 @@ inline std::string fmt_int(long long n) {
   return ss.str();
 }
 
-// Formatea velocidad: 3500000 -> "3.50 M/s"
+// Formats speed: 3500000 -> "3.50 M/s"
 inline std::string fmt_speed(size_t expansions, long long ms) {
   if (ms == 0)
     return "Inf M/s";
@@ -48,7 +47,7 @@ inline std::string fmt_speed(size_t expansions, long long ms) {
   return ss.str();
 }
 
-// --- FUNCIONES DE LOGGING ---
+// --- LOGGING FUNCTIONS ---
 
 inline void print_header() {
   std::cout << "\n"
@@ -70,7 +69,7 @@ inline void print_load_graph(std::string const &filename) {
   std::cout << "[" << BLUE << "INFO" << RESET
             << "]  Cargando grafo: " << filename << "...\n";
 }
-// Imprime estadísticas de carga del grafo
+// Prints graph loading statistics
 inline void print_graph_stats(long long ms, int nodes, int edges) {
 
   std::cout << "[" << GREEN << " OK " << RESET << "]  Grafo cargado en " << BOLD
@@ -80,27 +79,27 @@ inline void print_graph_stats(long long ms, int nodes, int edges) {
   std::cout << "------------------------------------------------------------\n";
 }
 
-// Imprime estadísticas de un algoritmo (A* o Dijkstra)
-// alg_name: "A* (Bucket)" o "Dijkstra"
+// Prints statistics for an algorithm (A* or Dijkstra)
+// alg_name: "A*" or "Dijkstra"
 inline void print_alg_stats(const std::string &alg_name, long long ms,
                             size_t expansions, double cost) {
-  // Color del tag según el algoritmo
+  // Tag color depends on the algorithm
   std::string color =
       (alg_name.find("A*") != std::string::npos) ? CYAN : YELLOW;
 
   std::cout << "\n[" << color << alg_name << RESET << "] Resultados:\n";
 
-  // Tabla alineada internamente
+  // Internally aligned table
   std::cout << "        -> Tiempo:      " << BOLD << fmt_int(ms) << " ms"
             << RESET << "\n";
   std::cout << "        -> Expansiones: " << fmt_int(expansions) << "\n";
   std::cout << "        -> Velocidad:   " << fmt_speed(expansions, ms) << "\n";
-  // Coste formateado como entero si es grande, o científico si se prefiere
+  // Cost formatted as an integer
   std::cout << "        -> " << BOLD
             << "Coste:       " << fmt_int((long long)cost) << RESET << "\n";
 }
 
-// Comparación final (si se corren ambos)
+// Final comparison (if both are run)
 inline void print_comparison(double cost_astar, double cost_dijkstra) {
   std::cout
       << "\n------------------------------------------------------------\n";
@@ -117,7 +116,7 @@ inline void print_comparison(double cost_astar, double cost_dijkstra) {
       << "============================================================\n\n";
 }
 
-// Para errores
+// For errors
 inline void error(const std::string &msg) {
   std::cerr << "[" << RED << "ERROR" << RESET << "] " << msg << std::endl;
 }

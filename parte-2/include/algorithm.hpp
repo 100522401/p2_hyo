@@ -14,7 +14,7 @@ struct AlgorithmResult {
 class Algorithm {
 public:
   static constexpr double INF = std::numeric_limits<double>::max();
-  // Constructor
+
   Algorithm(Graph &g, int start, int goal)
       : graph_(g), start_(start), goal_(goal), open_(), closed_(g.n, 0),
         g_(g.n, INF), parent_(g.n, -1) {}

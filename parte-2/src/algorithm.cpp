@@ -4,47 +4,47 @@
 #include <chrono>
 #include <cmath>
 
-// Constante grande para inicialización
+// Large constant for initialization
 const int INF_INT = 2000000000;
 
-// FACTOR DE CONVERSIÓN: Microgrados a Decímetros
-// Cálculo:
-// Radio Tierra (R) = 6,371,000 metros = 63,710,000 decímetros.
-// Perímetro = 2 * PI * R ≈ 400,301,735 decímetros.
-// 1 grado = Perímetro / 360 ≈ 1,111,949 decímetros.
-// 1 microgrado (10^-6) ≈ 1.111949 decímetros.
+// CONVERSION FACTOR: Microdegrees to Decimeters
+// Calculation:
+// Earth Radius (R) = 6,371,000 meters = 63,710,000 decimeters.
+// Perimeter = 2 * PI * R ≈ 400,301,735 decimeters.
+// 1 degree = Perimeter / 360 ≈ 1,111,949 decimeters.
+// 1 microdegree (10^-6) ≈ 1.111949 decimeters.
 const double MICRODEG_TO_DECIMETERS = 1.111949266;
 
-// FACTOR DE SEGURIDAD
-// Reduce la h un 0.1% para absorber errores de la proyección plana y garantizar
-// que h nunca supere el coste real (admisibilidad).
+// SAFETY FACTOR
+// Reduces h by 0.1% to absorb errors from the flat projection and ensure
+// that h never exceeds the real cost (admissibility).
 const double ADMISSIBILITY_FACTOR = 0.999;
 
 const double FINAL_FACTOR = MICRODEG_TO_DECIMETERS * ADMISSIBILITY_FACTOR;
 
 /**
- * Heurística Euclídea Escalada (Modo Rápido).
- * Asume que el grafo está en coordenadas enteras (microgrados)
- * y los pesos en decímetros.
+ * Scaled Euclidean Heuristic (Fast Mode).
+ * Assumes the graph is in integer coordinates (microdegrees)
+ * and weights are in decimeters.
  */
 int Algorithm::h(int n, double cos_lat_goal) {
   const Coord &a = graph_.coords[n];
   const Coord &b = graph_.coords[goal_];
 
-  // 1. Diferencias directas (en microgrados)
+  // 1. Direct differences (in microdegrees)
   long long dlat = std::abs(a.lat - b.lat);
   long long dlon = std::abs(a.lon - b.lon);
 
-  // 2. Ajuste de longitud por la latitud (proyección equirrectangular)
-  // Escala la diferencia de longitud según el coseno de la latitud
-  // promedio/objetivo
+  // 2. Longitude adjustment by latitude (equirectangular projection)
+  // Scales the longitude difference by the cosine of the
+  // average/goal latitude.
   double dlon_scaled = dlon * cos_lat_goal;
 
-  // 3. Distancia Euclídea en "unidades de mapa"
-  // Usamos double para la suma de cuadrados para evitar overflow de long long
+  // 3. Euclidean distance in "map units"
+  // We use double for the sum of squares to avoid long long overflow.
   double dist_sq = (double)(dlat * dlat) + (dlon_scaled * dlon_scaled);
 
-  // 4. Raíz cuadrada y conversión a decímetros
+  // 4. Square root and conversion to decimeters
   double dist_raw = std::sqrt(dist_sq);
 
   return static_cast<int>(dist_raw * FINAL_FACTOR);
@@ -53,12 +53,12 @@ int Algorithm::h(int n, double cos_lat_goal) {
 AlgorithmResult Algorithm::run() {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  // 1. Precalcular Coseno de la latitud del objetivo para la proyección
-  // Convertimos de microgrados a radianes: (lat / 10^6) * (PI / 180)
+  // 1. Precompute the cosine of the goal's latitude for the projection
+  // Convert from microdegrees to radians: (lat / 10^6) * (PI / 180)
   double lat_rad = (graph_.coords[goal_].lat / 1000000.0) * (M_PI / 180.0);
   double cos_lat_goal = std::cos(lat_rad);
 
-  // 2. Reiniciar estructuras
+  // 2. Reset data structures
   std::fill(g_.begin(), g_.end(), INF_INT);
   std::fill(parent_.begin(), parent_.end(), -1);
   std::fill(closed_.begin(), closed_.end(), 0);
@@ -67,14 +67,14 @@ AlgorithmResult Algorithm::run() {
 
   std::size_t expansions = 0;
 
-  // 3. Nodo inicial
+  // 3. Initial node
   g_[start_] = 0;
   int start_h = h(start_, cos_lat_goal);
 
-  // Push directo (id, f_score)
+  // Direct push (id, f_score)
   open_.push(start_, 0 + start_h);
 
-  // 4. Bucle principal
+  // 4. Main loop
   while (!open_.empty()) {
     int u = open_.pop();
 
@@ -89,12 +89,12 @@ AlgorithmResult Algorithm::run() {
       break;
 
     auto [begin, end] = graph_.neighbours(u);
-    int gu = g_[u]; // Caché local
+    int gu = g_[u]; // Local cache
 
     for (auto it = begin; it != end; ++it) {
       int v = *it;
 
-      // Índice del arco en CSR
+      // Edge index in CSR
       int edge_idx = it - begin + graph_.row_ptr[u];
       int cost = graph_.weights[edge_idx];
 
@@ -110,7 +110,7 @@ AlgorithmResult Algorithm::run() {
     }
   }
 
-  // 5. Reconstrucción del camino
+  // 5. Path reconstruction
   std::vector<int> path;
   int total_cost = g_[goal_];
 
