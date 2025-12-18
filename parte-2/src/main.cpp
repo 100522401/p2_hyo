@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
    * Graph parsing
    * ======================= */
   GraphParser parser(map_name);
-  Graph g = parser.parse_debug();
+  Graph g = parser.parse();
 
   const int n_nodes = g.row_ptr.size() - 1;
   const int n_edges = g.weights.size();
@@ -91,26 +91,27 @@ int main(int argc, char **argv) {
   AlgorithmResult astar_result{};
   AlgorithmResult dijkstra_result{};
 
+  // Necessary prints
+  std::cout << "# vertices: " << n_nodes << "\n";
+  std::cout << "# arcos: " << n_edges << "\n";
+
+  // Run algorithms if specified
   if (run_astar)
     astar_result = solver.run();
 
   if (run_dijkstra)
     dijkstra_result = solver.run_dijkstra();
 
+  // Check pathfinding consistency
   if (mode == AlgorithmMode::BOTH &&
       astar_result.cost != dijkstra_result.cost) {
     std::cerr << "[ERROR] Los costes no coinciden entre A* y Dijkstra\n";
     return 1;
   }
 
+  // Print results
   const AlgorithmResult &final_result =
       (mode == AlgorithmMode::DIJKSTRA) ? dijkstra_result : astar_result;
-
-  /* =======================
-   * Output (console)
-   * ======================= */
-  std::cout << "# vertices: " << n_nodes << "\n";
-  std::cout << "# arcos: " << n_edges << "\n";
 
   if (final_result.path.empty()) {
     std::cout << "No se ha encontrado camino entre " << (start_node + 1)
@@ -120,14 +121,6 @@ int main(int argc, char **argv) {
 
   std::cout << "Solución óptima encontrada con coste " << final_result.cost
             << "\n";
-
-  if (run_astar)
-    std::cout << "Expansiones A*: " << astar_result.expansions << "\n";
-
-  if (run_dijkstra)
-    std::cout << "Expansiones Dijkstra: " << dijkstra_result.expansions << "\n";
-
-  // Print nodes/sec
 
   /* =======================
    * Output (file)

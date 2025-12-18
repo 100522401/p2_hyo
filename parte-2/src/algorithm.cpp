@@ -17,21 +17,16 @@ double Algorithm::h(int n, double cos_lat_goal) {
   double dlat = b.lat - a.lat;
   double dlon = (b.lon - a.lon) * cos_lat_goal;
 
-  // Distancia plana: R * sqrt(Δlat² + (Δlon * cos(lat))²)
+  // Plane distance: R * sqrt(Δlat² + (Δlon * cos(lat))²)
   const double R = 6371000.0;
   return R * sqrt(dlat * dlat + dlon * dlon);
 }
-
-// "Heuristic" for Dijkstra
-inline double null_h(int n) { return 0.0; }
 
 // Main method: runs A* and returns path and cost.
 AlgorithmResult Algorithm::run() {
   auto start = std::chrono::high_resolution_clock::now();
 
-  // --- OPTIMIZACIÓN PRE-BÚSQUEDA ---
-  // Calculamos el coseno de la latitud de destino UNA SOLA VEZ.
-  // Esto ahorra millones de llamadas a la función cos() en el bucle principal.
+  // Calculate once
   double cos_lat_goal = cos(graph_.coords[goal_].lat);
 
   // Initialize SOA for A* parameters (g_, parent_, closed_)
@@ -93,9 +88,11 @@ AlgorithmResult Algorithm::run() {
   auto ms =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
-  std::cerr << "Tiempo de ejecución A*: " << ms << " milisegundos" << std::endl;
+  std::cout << "\nTiempo de ejecución A*: " << ms << " ms" << std::endl;
+  std::cout << "Expansiones A*: " << expansions << std::endl;
   if (ms > 0) {
-    std::cerr << "Nodos/seg: " << (expansions * 1000.0) / ms << std::endl;
+    std::cout << "Nodos/seg A*: " << (expansions * 1000.0) / ms << " \n"
+              << std::endl;
   }
 
   return AlgorithmResult{path, total_cost, expansions};
@@ -156,9 +153,11 @@ AlgorithmResult Algorithm::run_dijkstra() {
                                                                   start_time)
                 .count();
 
-  std::cerr << "Tiempo de ejecución Dijkstra: " << ms << " ms\n";
+  std::cerr << "\nTiempo de ejecución Dijkstra: " << ms << " ms\n";
+  std::cerr << "Expansiones Dijkstra: " << expansions << "\n";
   if (ms > 0) {
-    std::cerr << "Nodos/seg: " << (expansions * 1000.0) / ms << std::endl;
+    std::cerr << "Nodos/seg Dijkstra: " << (expansions * 1000.0) / ms << "\n"
+              << std::endl;
   }
 
   return AlgorithmResult{path, total_cost, expansions};
