@@ -106,6 +106,8 @@ int main(int argc, char **argv) {
   if (mode == AlgorithmMode::BOTH &&
       astar_result.cost != dijkstra_result.cost) {
     std::cerr << "[ERROR] Los costes no coinciden entre A* y Dijkstra\n";
+    std::cerr << "A*: " << astar_result.cost << "\n";
+    std::cerr << "Dijkstra: " << dijkstra_result.cost << "\n";
     return 1;
   }
 

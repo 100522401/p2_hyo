@@ -2,8 +2,8 @@
 #include <vector>
 
 struct Coord {
-  double lon;
-  double lat;
+  int lon;
+  int lat;
 };
 
 class Graph {

@@ -2,7 +2,6 @@
 #define OPEN_LIST_H
 
 #include <cassert>
-#include <limits>
 #include <vector>
 
 class OpenList {

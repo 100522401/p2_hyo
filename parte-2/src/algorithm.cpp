@@ -8,28 +8,40 @@
 // Constante grande para inicialización
 const int INF_INT = 2000000000;
 
-/**
- * Heurística Entera.
- * IMPORTANTE: El resultado debe estar en la misma unidad que graph_.weights.
- * Si graph_.weights son tiempos (segundos), y esto calcula distancia (metros),
- * tu A* degradará a Dijkstra (si h es muy pequeña) o no será admisible (si h es
- * muy grande).
- * * Asumiremos aquí que necesitas distancia en metros.
- * Se hace un cast a int al final.
- */
-int Algorithm::h(int n, double cos_lat_goal) {
-  const Coord &a = graph_.coords[n];
-  const Coord &b = graph_.coords[goal_];
+#include <cmath>
 
-  double dlat = b.lat - a.lat;
-  double dlon = (b.lon - a.lon) * cos_lat_goal;
+/// Asegúrate de tener estas constantes definidas arriba o en la clase
+constexpr double DIMACS_TO_RAD = 0.00000001745329251994;
+constexpr double EARTH_RADIUS_METERS = 6371000.0;
 
-  // R = 6371000.0 metros
-  // Multiplica por un factor si tus pesos no son metros (ej. si son decímetros
-  // o mm)
-  double dist = 6371000.0 * std::sqrt(dlat * dlat + dlon * dlon);
+int Algorithm::h(int n, double /*unused*/) {
+  const Coord &n_coord = graph_.coords[n];
+  const Coord &target_coord = graph_.coords[goal_];
 
-  return static_cast<int>(dist);
+  // 1. Convertir enteros DIMACS a radianes
+  double lat1 = n_coord.lat * DIMACS_TO_RAD;
+  double lon1 = n_coord.lon * DIMACS_TO_RAD;
+  double lat2 = target_coord.lat * DIMACS_TO_RAD;
+  double lon2 = target_coord.lon * DIMACS_TO_RAD;
+
+  // 2. Fórmula de Haversine
+  double dlat = lat2 - lat1;
+  double dlon = lon2 - lon1;
+
+  double a =
+      std::sin(dlat / 2) * std::sin(dlat / 2) +
+      std::cos(lat1) * std::cos(lat2) * std::sin(dlon / 2) * std::sin(dlon / 2);
+
+  double c = 2 * std::atan2(std::sqrt(a), std::sqrt(1 - a));
+
+  // 3. Distancia en metros
+  double dist_meters = EARTH_RADIUS_METERS * c;
+
+  // 4. ESCALADO (La clave del éxito)
+  // El grafo está en decímetros (ratio ~10).
+  // Usamos 9.99 en vez de 10.0 para asegurar admisibilidad (h <= g)
+  // ante mínimas variaciones del elipsoide vs esfera.
+  return static_cast<int>(dist_meters * 9.99);
 }
 
 AlgorithmResult Algorithm::run() {
@@ -54,6 +66,38 @@ AlgorithmResult Algorithm::run() {
 
   // Push directo (id, f_score)
   open_.push(start_, 0 + start_h);
+  // --- INICIO DEBUG DE CALIBRACIÓN ---
+  std::cout << "\n[CALIBRANDO ESCALA]" << std::endl;
+  // Miramos los primeros 5 vecinos del nodo start para ver la relación
+  auto [dbg_begin, dbg_end] = graph_.neighbours(start_);
+  int count = 0;
+
+  for (auto it = dbg_begin; it != dbg_end && count < 5; ++it, ++count) {
+    int v = *it;
+
+    // 1. Obtenemos el peso que dice el grafo (g)
+    int edge_idx = it - dbg_begin + graph_.row_ptr[start_];
+    int graph_weight = graph_.weights[edge_idx];
+
+    // 2. Calculamos la distancia Haversine pura (h)
+    // (Truco: calculamos h entre start y v)
+    int old_goal = goal_;
+    goal_ = v;
+    int haversine_dist = h(start_, 0);
+    goal_ = old_goal;
+
+    if (haversine_dist == 0)
+      haversine_dist = 1; // Evitar div/0
+
+    double ratio = (double)graph_weight / (double)haversine_dist;
+
+    std::cout << "  Arista " << start_ << "->" << v
+              << " | Peso Grafo: " << graph_weight
+              << " | Haversine (m): " << haversine_dist
+              << " | RATIO (k): " << ratio << std::endl;
+  }
+  std::cout << "--------------------------------\n";
+  // --- FIN DEBUG ---
 
   // 3. Bucle principal
   while (!open_.empty()) {
