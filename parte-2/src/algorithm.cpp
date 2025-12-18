@@ -134,6 +134,7 @@ AlgorithmResult Algorithm::run() {
 AlgorithmResult Algorithm::run_dijkstra() {
   auto start_time = std::chrono::high_resolution_clock::now();
 
+  // Reset data structures
   std::fill(g_.begin(), g_.end(), INF);
   std::fill(parent_.begin(), parent_.end(), -1);
   std::fill(closed_.begin(), closed_.end(), 0);
@@ -144,6 +145,7 @@ AlgorithmResult Algorithm::run_dijkstra() {
   g_[start_] = 0.0;
   open_.push(start_, 0.0);
 
+  // Main loop
   while (!open_.empty()) {
     Node current = open_.pop();
     int u = current.id;
@@ -151,12 +153,15 @@ AlgorithmResult Algorithm::run_dijkstra() {
     if (closed_[u])
       continue;
 
+    // Close node
     closed_[u] = 1;
     expansions++;
 
+    // If goal was reached, stop
     if (u == goal_)
       break;
 
+    // Iterate through neighbours
     auto [begin, end] = graph_.neighbours(u);
     int idx = graph_.row_ptr[u];
     for (auto it = begin; it != end; ++it, ++idx) {
@@ -172,6 +177,7 @@ AlgorithmResult Algorithm::run_dijkstra() {
     }
   }
 
+  // Reconstruct path
   std::vector<int> path;
   double total_cost = g_[goal_];
   if (total_cost < INF) {
