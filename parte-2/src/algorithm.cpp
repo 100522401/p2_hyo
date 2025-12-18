@@ -8,104 +8,78 @@
 // Constante grande para inicialización
 const int INF_INT = 2000000000;
 
-#include <cmath>
+// FACTOR DE CONVERSIÓN: Microgrados a Decímetros
+// Cálculo:
+// Radio Tierra (R) = 6,371,000 metros = 63,710,000 decímetros.
+// Perímetro = 2 * PI * R ≈ 400,301,735 decímetros.
+// 1 grado = Perímetro / 360 ≈ 1,111,949 decímetros.
+// 1 microgrado (10^-6) ≈ 1.111949 decímetros.
+const double MICRODEG_TO_DECIMETERS = 1.111949266;
 
-/// Asegúrate de tener estas constantes definidas arriba o en la clase
-constexpr double DIMACS_TO_RAD = 0.00000001745329251994;
-constexpr double EARTH_RADIUS_METERS = 6371000.0;
+// FACTOR DE SEGURIDAD
+// Reduce la h un 0.1% para absorber errores de la proyección plana y garantizar
+// que h nunca supere el coste real (admisibilidad).
+const double ADMISSIBILITY_FACTOR = 0.999;
 
-int Algorithm::h(int n, double /*unused*/) {
-  const Coord &n_coord = graph_.coords[n];
-  const Coord &target_coord = graph_.coords[goal_];
+const double FINAL_FACTOR = MICRODEG_TO_DECIMETERS * ADMISSIBILITY_FACTOR;
 
-  // 1. Convertir enteros DIMACS a radianes
-  double lat1 = n_coord.lat * DIMACS_TO_RAD;
-  double lon1 = n_coord.lon * DIMACS_TO_RAD;
-  double lat2 = target_coord.lat * DIMACS_TO_RAD;
-  double lon2 = target_coord.lon * DIMACS_TO_RAD;
+/**
+ * Heurística Euclídea Escalada (Modo Rápido).
+ * Asume que el grafo está en coordenadas enteras (microgrados)
+ * y los pesos en decímetros.
+ */
+int Algorithm::h(int n, double cos_lat_goal) {
+  const Coord &a = graph_.coords[n];
+  const Coord &b = graph_.coords[goal_];
 
-  // 2. Fórmula de Haversine
-  double dlat = lat2 - lat1;
-  double dlon = lon2 - lon1;
+  // 1. Diferencias directas (en microgrados)
+  long long dlat = std::abs(a.lat - b.lat);
+  long long dlon = std::abs(a.lon - b.lon);
 
-  double a =
-      std::sin(dlat / 2) * std::sin(dlat / 2) +
-      std::cos(lat1) * std::cos(lat2) * std::sin(dlon / 2) * std::sin(dlon / 2);
+  // 2. Ajuste de longitud por la latitud (proyección equirrectangular)
+  // Escala la diferencia de longitud según el coseno de la latitud
+  // promedio/objetivo
+  double dlon_scaled = dlon * cos_lat_goal;
 
-  double c = 2 * std::atan2(std::sqrt(a), std::sqrt(1 - a));
+  // 3. Distancia Euclídea en "unidades de mapa"
+  // Usamos double para la suma de cuadrados para evitar overflow de long long
+  double dist_sq = (double)(dlat * dlat) + (dlon_scaled * dlon_scaled);
 
-  // 3. Distancia en metros
-  double dist_meters = EARTH_RADIUS_METERS * c;
+  // 4. Raíz cuadrada y conversión a decímetros
+  double dist_raw = std::sqrt(dist_sq);
 
-  // 4. ESCALADO (La clave del éxito)
-  // El grafo está en decímetros (ratio ~10).
-  // Usamos 9.99 en vez de 10.0 para asegurar admisibilidad (h <= g)
-  // ante mínimas variaciones del elipsoide vs esfera.
-  return static_cast<int>(dist_meters * 9.99);
+  return static_cast<int>(dist_raw * FINAL_FACTOR);
 }
 
 AlgorithmResult Algorithm::run() {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  double cos_lat_goal = std::cos(graph_.coords[goal_].lat);
+  // 1. Precalcular Coseno de la latitud del objetivo para la proyección
+  // Convertimos de microgrados a radianes: (lat / 10^6) * (PI / 180)
+  double lat_rad = (graph_.coords[goal_].lat / 1000000.0) * (M_PI / 180.0);
+  double cos_lat_goal = std::cos(lat_rad);
 
-  // 1. Reiniciar estructuras (Usamos int para g_)
-  // g_ debe ser std::vector<int> en tu header
+  // 2. Reiniciar estructuras
   std::fill(g_.begin(), g_.end(), INF_INT);
   std::fill(parent_.begin(), parent_.end(), -1);
-  std::fill(closed_.begin(), closed_.end(),
-            0); // closed puede ser vector<bool> o char
+  std::fill(closed_.begin(), closed_.end(), 0);
 
   open_.clear();
 
   std::size_t expansions = 0;
 
-  // 2. Nodo inicial
+  // 3. Nodo inicial
   g_[start_] = 0;
   int start_h = h(start_, cos_lat_goal);
 
   // Push directo (id, f_score)
   open_.push(start_, 0 + start_h);
-  // --- INICIO DEBUG DE CALIBRACIÓN ---
-  std::cout << "\n[CALIBRANDO ESCALA]" << std::endl;
-  // Miramos los primeros 5 vecinos del nodo start para ver la relación
-  auto [dbg_begin, dbg_end] = graph_.neighbours(start_);
-  int count = 0;
 
-  for (auto it = dbg_begin; it != dbg_end && count < 5; ++it, ++count) {
-    int v = *it;
-
-    // 1. Obtenemos el peso que dice el grafo (g)
-    int edge_idx = it - dbg_begin + graph_.row_ptr[start_];
-    int graph_weight = graph_.weights[edge_idx];
-
-    // 2. Calculamos la distancia Haversine pura (h)
-    // (Truco: calculamos h entre start y v)
-    int old_goal = goal_;
-    goal_ = v;
-    int haversine_dist = h(start_, 0);
-    goal_ = old_goal;
-
-    if (haversine_dist == 0)
-      haversine_dist = 1; // Evitar div/0
-
-    double ratio = (double)graph_weight / (double)haversine_dist;
-
-    std::cout << "  Arista " << start_ << "->" << v
-              << " | Peso Grafo: " << graph_weight
-              << " | Haversine (m): " << haversine_dist
-              << " | RATIO (k): " << ratio << std::endl;
-  }
-  std::cout << "--------------------------------\n";
-  // --- FIN DEBUG ---
-
-  // 3. Bucle principal
+  // 4. Bucle principal
   while (!open_.empty()) {
-    // Pop devuelve solo el ID (int)
     int u = open_.pop();
 
-    // Lazy removal: Si ya cerramos este nodo con un coste mejor o igual,
-    // ignorar. En Bucket Queue es crítico verificar closed inmediatamente.
+    // Lazy removal
     if (closed_[u])
       continue;
 
@@ -116,16 +90,13 @@ AlgorithmResult Algorithm::run() {
       break;
 
     auto [begin, end] = graph_.neighbours(u);
-    // Optimización: Sacar g_[u] fuera del bucle for
-    int gu = g_[u];
+    int gu = g_[u]; // Caché local
 
     for (auto it = begin; it != end; ++it) {
       int v = *it;
 
-      // Cálculo del índice del peso en el grafo CSR
+      // Índice del arco en CSR
       int edge_idx = it - begin + graph_.row_ptr[u];
-
-      // Pesos enteros
       int cost = graph_.weights[edge_idx];
 
       int new_g = gu + cost;
@@ -134,22 +105,15 @@ AlgorithmResult Algorithm::run() {
         g_[v] = new_g;
         parent_[v] = u;
 
-        // Calculamos f entero
         int f = new_g + h(v, cos_lat_goal);
-
-        // Insertamos en el bucket
         open_.push(v, f);
-
-        // Nota: En bucket queues no hacemos decrease-key explícito,
-        // simplemente insertamos el nuevo par. El viejo se descartará al hacer
-        // pop gracias al chequeo `if (closed_[u])`.
       }
     }
   }
 
-  // 4. Reconstrucción del camino
+  // 5. Reconstrucción del camino
   std::vector<int> path;
-  int total_cost = g_[goal_]; // Coste entero
+  int total_cost = g_[goal_];
 
   if (total_cost != INF_INT) {
     int u = goal_;
@@ -165,6 +129,7 @@ AlgorithmResult Algorithm::run() {
                                                                   start_time)
                 .count();
 
+  // Salida limpia sin debugs intermedios
   std::cout << "\nTiempo de ejecución A* (Bucket): " << ms << " ms"
             << std::endl;
   std::cout << "Expansiones: " << expansions << std::endl;
@@ -172,8 +137,6 @@ AlgorithmResult Algorithm::run() {
     std::cout << "Nodos/seg: " << (expansions * 1000.0) / ms << std::endl;
   }
 
-  // Convertir coste a double para mantener compatibilidad con tu struct de
-  // retorno si es necesario
   return AlgorithmResult{path, static_cast<double>(total_cost), expansions};
 }
 
