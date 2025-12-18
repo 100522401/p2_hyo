@@ -1,4 +1,5 @@
 #include "graph_parser.hpp"
+#include "logger.hpp"
 #include <chrono>
 #include <cmath>
 #include <fstream>
@@ -64,9 +65,11 @@ inline int fastAtoiSigned(const char *&p, const char *end) {
 }
 
 Graph GraphParser::parse() {
+  Logger::print_load_graph(gr_file);
+
   ifstream fin(gr_file);
   if (!fin.is_open()) {
-    cerr << "[GraphParser] No se pudo abrir el archivo: " << gr_file << endl;
+    Logger::error("No se pudo abrir el archivo: " + gr_file);
     return Graph();
   }
 
@@ -115,8 +118,6 @@ Graph GraphParser::parse() {
 
       // initialize count vector with n positions
       count.assign(n, 0);
-
-      cerr << "[DEBUG] Cabecera: n=" << n << " m=" << m << '\n';
 
       header_read = true;
       continue;
@@ -189,16 +190,12 @@ Graph GraphParser::parse() {
 
   // Create row_ptr
   g.row_ptr[0] = 0;
-  cerr << "[DEBUG] row_ptr empieza:" << endl;
   for (int i = 0; i < n; i++) {
     g.row_ptr[i + 1] = g.row_ptr[i] + count[i];
   }
-  cerr << "[DEBUG] row_ptr acaba:" << endl;
 
   // Create temp_ptr
   std::vector<int> temp_ptr = g.row_ptr;
-
-  cerr << "[DEBUG] aristas empiezan:" << endl;
 
   // Insert edges into CSR
   for (const auto &e : edges) {
@@ -206,10 +203,6 @@ Graph GraphParser::parse() {
     g.col_idx[pos] = e.v;
     g.weights[pos] = e.w;
   }
-
-  cerr << "[DEBUG] Aristas terminan: " << g.row_ptr[n]
-       << " aristas almacenadas.\n";
-
   fin.close();
 
   parseNodes(g);
@@ -217,27 +210,23 @@ Graph GraphParser::parse() {
   return g;
 }
 
-Graph GraphParser::parse_debug() {
+Graph GraphParser::parse_with_stats() {
   auto start = high_resolution_clock::now();
   Graph g = parse();
   auto end = high_resolution_clock::now();
-  auto duration = duration_cast<milliseconds>(end - start).count();
-  cout << "[GraphParser] Tiempo de parseo: " << duration << " ms" << endl;
-  cout << "[GraphParser] Número de nodos: " << g.n << endl;
-  cout << "[GraphParser] Número de aristas: " << g.m << endl;
+  long long duration = duration_cast<milliseconds>(end - start).count();
+  Logger::print_graph_stats(duration, g.n, g.m);
   return g;
 }
 
 void GraphParser::parseNodes(Graph &g) const {
   ifstream fin(co_file);
   if (!fin.is_open()) {
-    cerr << "[GraphParser] No se pudo abrir el archivo .co: " << co_file
-         << endl;
+    Logger::error("No se pudo abrir el archivo .co: " + co_file);
     return;
   }
 
   string line;
-  cerr << "[DEBUG] nodos empieza:" << endl;
 
   while (getline(fin, line)) {
     if (line.empty() || line[0] == 'c') {
@@ -268,7 +257,6 @@ void GraphParser::parseNodes(Graph &g) const {
 
     g.coords[id - 1] = {lon_int, lat_int};
   }
-  cerr << "[DEBUG] nodos acaba:" << endl;
 
   fin.close();
 }

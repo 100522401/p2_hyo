@@ -1,5 +1,6 @@
 #include "algorithm.hpp"
 #include "graph_parser.hpp"
+#include "logger.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -22,21 +23,22 @@ int main(int argc, char **argv) {
    * Argument parsing
    * ======================= */
   if (argc != 5 && argc != 7) {
-    std::cerr << "Uso:\n"
-              << argv[0]
-              << " <vertice-1> <vertice-2> <nombre-del-mapa> <fichero-salida>\n"
+    Logger::error("Argumentos incorrectos.");
+    std::cout << "Uso:\n"
+              << "  " << argv[0]
+              << " <v_inicio> <v_fin> <mapa> <fichero_salida>\n"
               << "Opcional:\n"
-              << "  --algorithm astar | dijkstra | both\n";
+              << "  --algorithm <astar | dijkstra | both>\n";
     return 1;
   }
 
   int start_node = std::stoi(argv[1]) - 1; // base 0
   int goal_node = std::stoi(argv[2]) - 1;
   std::string map_name = argv[3];
-  std::string output_file = argv[4];
+  std::string output_filename = argv[4];
 
   if (start_node < 0 || goal_node < 0) {
-    std::cerr << "Los vértices deben ser >= 1\n";
+    Logger::error("Los vértices deben ser >= 1.");
     return 1;
   }
 
@@ -44,7 +46,7 @@ int main(int argc, char **argv) {
 
   if (argc == 7) {
     if (std::string(argv[5]) != "--algorithm") {
-      std::cerr << "Opción desconocida: " << argv[5] << "\n";
+      Logger::error("Opción desconocida: " + std::string(argv[5]));
       return 1;
     }
 
@@ -56,7 +58,7 @@ int main(int argc, char **argv) {
     else if (value == "both")
       mode = AlgorithmMode::BOTH;
     else {
-      std::cerr << "Algoritmo desconocido: " << value << "\n";
+      Logger::error("Algoritmo desconocido: " + value);
       return 1;
     }
   }
@@ -64,22 +66,25 @@ int main(int argc, char **argv) {
   const bool run_astar = (mode != AlgorithmMode::DIJKSTRA);
   const bool run_dijkstra = (mode != AlgorithmMode::ASTAR);
 
+  Logger::print_header();
+
   /* =======================
    * Graph parsing
    * ======================= */
   GraphParser parser(map_name);
-  Graph g = parser.parse();
+  Graph g = parser.parse_with_stats();
 
   const int n_nodes = g.row_ptr.size() - 1;
   const int n_edges = g.weights.size();
 
   if (n_nodes != g.n || n_edges != g.m) {
-    std::cerr << "Error en el parseo del grafo\n";
+    Logger::error("Error en el parseo del grafo.");
     return 1;
   }
 
   if (start_node >= n_nodes || goal_node >= n_nodes) {
-    std::cerr << "Vértices fuera de rango. #vértices = " << n_nodes << "\n";
+    Logger::error("Vértices fuera de rango. El número de vértices es: " +
+                  std::to_string(n_nodes));
     return 1;
   }
 
@@ -91,10 +96,6 @@ int main(int argc, char **argv) {
   AlgorithmResult astar_result{};
   AlgorithmResult dijkstra_result{};
 
-  // Necessary prints
-  std::cout << "# vertices: " << n_nodes << "\n";
-  std::cout << "# arcos: " << n_edges << "\n";
-
   // Run algorithms if specified
   if (run_astar)
     astar_result = solver.run();
@@ -102,43 +103,43 @@ int main(int argc, char **argv) {
   if (run_dijkstra)
     dijkstra_result = solver.run_dijkstra();
 
-  // Check pathfinding consistency
-  if (mode == AlgorithmMode::BOTH &&
-      astar_result.cost != dijkstra_result.cost) {
-    std::cerr << "[ERROR] Los costes no coinciden entre A* y Dijkstra\n";
-    std::cerr << "A*: " << astar_result.cost << "\n";
-    std::cerr << "Dijkstra: " << dijkstra_result.cost << "\n";
-    return 1;
+  // Print results
+  if (run_astar) {
+    Logger::print_alg_stats("A*", astar_result.ms, astar_result.expansions,
+                            astar_result.cost);
+  }
+  if (run_dijkstra) {
+    Logger::print_alg_stats("Dijkstra", dijkstra_result.ms,
+                            dijkstra_result.expansions, dijkstra_result.cost);
+  }
+  if (mode == AlgorithmMode::BOTH) {
+    Logger::print_comparison(astar_result.cost, dijkstra_result.cost);
   }
 
-  // Print results
-  const AlgorithmResult &final_result =
+  const auto &result_to_write =
       (mode == AlgorithmMode::DIJKSTRA) ? dijkstra_result : astar_result;
-
-  if (final_result.path.empty()) {
-    std::cout << "No se ha encontrado camino entre " << (start_node + 1)
-              << " y " << (goal_node + 1) << "\n";
+  if (result_to_write.path.empty()) {
+    Logger::info("No se ha encontrado camino entre " +
+                 std::to_string(start_node + 1) + " y " +
+                 std::to_string(goal_node + 1) + ".");
     return 0;
   }
-
-  std::cout << "Solución óptima encontrada con coste " << final_result.cost
-            << "\n";
 
   /* =======================
    * Output (file)
    * ======================= */
-  std::ofstream fout(output_file);
+  std::ofstream fout(output_filename);
   if (!fout) {
-    std::cerr << "No se pudo abrir fichero de salida: " << output_file << "\n";
+    Logger::error("No se pudo abrir el fichero de salida: " + output_filename);
     return 1;
   }
 
-  for (size_t i = 0; i < final_result.path.size(); ++i) {
-    int u = final_result.path[i];
+  for (size_t i = 0; i < result_to_write.path.size(); ++i) {
+    int u = result_to_write.path[i];
     fout << (u + 1);
 
-    if (i + 1 < final_result.path.size()) {
-      int v = final_result.path[i + 1];
+    if (i + 1 < result_to_write.path.size()) {
+      int v = result_to_write.path[i + 1];
       fout << " - (" << edge_cost(g, u, v) << ") - ";
     }
   }

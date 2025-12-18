@@ -128,16 +128,7 @@ AlgorithmResult Algorithm::run() {
   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
                                                                   start_time)
                 .count();
-
-  // Salida limpia sin debugs intermedios
-  std::cout << "\nTiempo de ejecución A* (Bucket): " << ms << " ms"
-            << std::endl;
-  std::cout << "Expansiones: " << expansions << std::endl;
-  if (ms > 0) {
-    std::cout << "Nodos/seg: " << (expansions * 1000.0) / ms << std::endl;
-  }
-
-  return AlgorithmResult{path, static_cast<double>(total_cost), expansions};
+  return AlgorithmResult{path, static_cast<double>(total_cost), expansions, ms};
 }
 
 // Dijkstra Algorithm for comparison
@@ -194,13 +185,5 @@ AlgorithmResult Algorithm::run_dijkstra() {
   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
                                                                   start_time)
                 .count();
-
-  std::cerr << "\nTiempo de ejecución Dijkstra: " << ms << " ms\n";
-  std::cerr << "Expansiones Dijkstra: " << expansions << "\n";
-  if (ms > 0) {
-    std::cerr << "Nodos/seg Dijkstra: " << (expansions * 1000.0) / ms << "\n"
-              << std::endl;
-  }
-
-  return AlgorithmResult{path, total_cost, expansions};
+  return AlgorithmResult{path, total_cost, expansions, ms};
 }

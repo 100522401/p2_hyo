@@ -11,7 +11,7 @@ public:
 
   // Main function
   Graph parse();
-  Graph parse_debug();
+  Graph parse_with_stats();
 
 private:
   // Attributes
