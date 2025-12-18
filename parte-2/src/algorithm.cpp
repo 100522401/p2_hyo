@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <iostream>
 
 // Constante grande para inicialización
 const int INF_INT = 2000000000;

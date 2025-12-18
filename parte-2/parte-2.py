@@ -6,9 +6,10 @@ from pathlib import Path
 
 
 def main():
-    if len(sys.argv) != 5:
+    if len(sys.argv) not in [5, 7]:
         print(
-            "Uso: ./programa <vertice-1> <vertice-2> <nombre-del-mapa> <fichero-salida>"
+            "Uso: ./programa <vertice-1> <vertice-2> <nombre-del-mapa> <fichero-salida>\n",
+            "Opcional: --algorithm <algoritmo> (dijkstra | astar | both).\n",
         )
         return 1
 
@@ -20,6 +21,9 @@ def main():
     co_file = Path(map_name + ".co").resolve()
     gr_file = Path(map_name + ".gr").resolve()
     map_paths = [co_file, gr_file]
+
+    # Algoritmo por defecto
+    algorithm = "astar"
 
     # Comprobación existencia mapa
     if not all(map_path.exists() for map_path in map_paths):
@@ -33,11 +37,14 @@ def main():
     exe = root / "build" / "graph_parser"
 
     if not exe.exists():
-        print(f"Error: no existe el binario: {exe}", file=sys.stderr)
+        print(f"[ERROR]: no existe el binario: {exe}", file=sys.stderr)
         return 1
 
     # ejecutar: ./parte-2 u v map_name out_file
-    cmd = [str(exe), u, v, map_path, output_file]
+    if len(sys.argv) == 7:
+        algorithm = sys.argv[6]
+
+    cmd = [str(exe), u, v, map_path, output_file, "--algorithm", algorithm]
     return subprocess.call(cmd)
 
 

@@ -3,7 +3,6 @@
 #include <chrono>
 #include <cmath>
 #include <fstream>
-#include <iostream>
 #include <vector>
 
 using namespace std;
