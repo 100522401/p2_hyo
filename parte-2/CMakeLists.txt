@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Nombre del ejecutable que se generará.
-set(EXECUTABLE_NAME graph_parser)
+set(EXECUTABLE_NAME pathfinder)
 
 # Busca de forma automática todos los archivos con extensión .cpp
 # dentro del directorio 'src' y los guarda en la variable SOURCES.

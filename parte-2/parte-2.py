@@ -34,7 +34,7 @@ def main():
 
     # Comprobación existencia binario
     root = Path(__file__).resolve().parent
-    exe = root / "build" / "graph_parser"
+    exe = root / "build" / "pathfinder"
 
     if not exe.exists():
         print(f"[ERROR]: no existe el binario: {exe}", file=sys.stderr)

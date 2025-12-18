@@ -32,24 +32,30 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // Parse nodes (in base 0)
   int start_node = std::stoi(argv[1]) - 1; // base 0
   int goal_node = std::stoi(argv[2]) - 1;
-  std::string map_name = argv[3];
-  std::string output_filename = argv[4];
 
+  // Node verifications
   if (start_node < 0 || goal_node < 0) {
     Logger::error("Los vértices deben ser >= 1.");
     return 1;
   }
+  // Parse map name and outfile
+  std::string map_name = argv[3];
+  std::string output_filename = argv[4];
 
+  // Default algorithm
   AlgorithmMode mode = AlgorithmMode::ASTAR;
 
+  // If algorithm was specified:
   if (argc == 7) {
     if (std::string(argv[5]) != "--algorithm") {
       Logger::error("Opción desconocida: " + std::string(argv[5]));
       return 1;
     }
 
+    // Parse algorithm
     std::string value = argv[6];
     if (value == "astar")
       mode = AlgorithmMode::ASTAR;
@@ -63,6 +69,7 @@ int main(int argc, char **argv) {
     }
   }
 
+  // Conditionals used for running algorithms
   const bool run_astar = (mode != AlgorithmMode::DIJKSTRA);
   const bool run_dijkstra = (mode != AlgorithmMode::ASTAR);
 
@@ -77,11 +84,13 @@ int main(int argc, char **argv) {
   const int n_nodes = g.row_ptr.size() - 1;
   const int n_edges = g.weights.size();
 
+  // Case: error parsing
   if (n_nodes != g.n || n_edges != g.m) {
     Logger::error("Error en el parseo del grafo.");
     return 1;
   }
 
+  // Case: Vertices out of range
   if (start_node >= n_nodes || goal_node >= n_nodes) {
     Logger::error("Vértices fuera de rango. El número de vértices es: " +
                   std::to_string(n_nodes));
